@@ -2047,37 +2047,59 @@
     <div id="ambulance" class="page">
         <div class="dashboard">
             <div class="dashboard-header">
-                <h1 class="dashboard-title">Emergency Ambulance Service</h1>
-                <div class="breadcrumb">Home / Ambulance</div>
+                <h1 class="dashboard-title">🚨 Emergency Services</h1>
+                <div class="breadcrumb">Home / Emergency Services</div>
             </div>
 
-            <div class="dashboard-grid">
+            <!-- Stats row -->
+            <div class="dashboard-grid" id="emerg-stats-row">
                 <div class="dashboard-card">
                     <div class="dashboard-card-icon">🚑</div>
-                    <div class="dashboard-card-value">24</div>
-                    <div class="dashboard-card-label">Total Ambulances</div>
+                    <div class="dashboard-card-value" id="emerg-stat-total">—</div>
+                    <div class="dashboard-card-label">Active Services</div>
                 </div>
                 <div class="dashboard-card">
                     <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #00C853, #00D9B5);">✅</div>
-                    <div class="dashboard-card-value" style="color: #00C853;">18</div>
-                    <div class="dashboard-card-label">Available</div>
+                    <div class="dashboard-card-value" style="color: #00C853;">24/7</div>
+                    <div class="dashboard-card-label">Availability</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">🚨</div>
-                    <div class="dashboard-card-value" style="color: #FFB800;">6</div>
-                    <div class="dashboard-card-label">On Duty</div>
-                </div>
-                <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">⏱️</div>
-                    <div class="dashboard-card-value" style="color: #FF6B6B;">8 min</div>
+                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">⏱️</div>
+                    <div class="dashboard-card-value" style="color: #FFB800;">&lt; 10 min</div>
                     <div class="dashboard-card-label">Avg Response Time</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">📞</div>
+                    <div class="dashboard-card-value" style="color: #FF6B6B; font-size:18px;">READY</div>
+                    <div class="dashboard-card-label">All Lines Active</div>
                 </div>
             </div>
 
-            <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: var(--shadow); text-align: center; margin-top: 30px;">
-                <h2 style="font-family: 'Sora', sans-serif; font-size: 32px; margin-bottom: 15px;">24/7 Emergency Service</h2>
-                <p style="font-size: 18px; color: var(--text-gray); margin-bottom: 30px;">Call immediately for emergency ambulance service</p>
-                <button class="btn emergency-btn" style="font-size: 24px; padding: 20px 50px;">📞 Call 1-800-EMERGENCY</button>
+            <!-- Emergency call banner -->
+            <div style="background: linear-gradient(135deg,#FF4444,#CC0000); padding: 28px 36px; border-radius: 16px; box-shadow: var(--shadow); text-align: center; margin: 0 0 28px; color: white;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🚨</div>
+                <h2 style="font-family: 'Sora', sans-serif; font-size: 28px; margin: 0 0 8px;">In case of emergency — call immediately</h2>
+                <p style="font-size: 16px; opacity: 0.9; margin: 0 0 20px;">Our response teams are available 24 hours a day, 7 days a week</p>
+                <button class="btn emergency-btn" style="font-size: 20px; padding: 16px 44px; background: white; color: #CC0000; border: none; border-radius: 10px; font-weight: 800; cursor: pointer;">
+                    📞 Call 1-800-EMERGENCY
+                </button>
+            </div>
+
+            <!-- Dynamic services grid -->
+            <div id="emerg-services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">Loading emergency services...</div>
+            </div>
+
+            <!-- Admin management panel (visible to admin only) -->
+            <div id="emerg-admin-panel" style="display:none;margin-top:32px;background:white;border-radius:16px;padding:28px;box-shadow:var(--shadow);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div>
+                        <h3 style="margin:0 0 4px;font-size:17px;">🔧 Manage Emergency Services</h3>
+                        <p style="color:var(--text-gray);font-size:13px;margin:0;">Add, edit or remove emergency services shown to public.</p>
+                    </div>
+                    <button onclick="openEmergAddModal()" class="btn btn-primary" style="white-space:nowrap;">+ Add Service</button>
+                </div>
+                <div id="emerg-admin-table-wrap"></div>
             </div>
         </div>
     </div>
@@ -3881,7 +3903,7 @@
         if (pageId === 'labBookings')  { loadLabBookings(); }
         if (pageId === 'pharmacy')     { loadMedicines(); loadPharmStats(); }
         if (pageId === 'radiology')    { loadRadiologyServices(); loadRadioStats(); }
-        if (pageId === 'radioBookings'){ loadRadioBookings(); }
+        if (pageId === 'ambulance')    { loadEmergencyServices(); }
     }
 
     // ── Modal helpers ─────────────────────────────────────────────────────────
@@ -4343,6 +4365,32 @@
         saveBtn.style.pointerEvents = 'auto';
         saveBtn.style.background = sCfg.color;
         saveBtn.textContent = `💾 Save — Set to ${s}`;
+
+        // Highlight amount field when Completed is selected
+        const amtEl = document.getElementById('sm-amount');
+        const amtWrap = amtEl ? amtEl.closest('div') : null;
+        if (amtEl) {
+            if (s === 'Completed') {
+                amtEl.style.borderColor = '#00C853';
+                amtEl.style.boxShadow = '0 0 0 3px rgba(0,200,83,0.15)';
+                amtEl.focus();
+                if (amtWrap) {
+                    const hint = amtWrap.querySelector('.amt-required-hint');
+                    if (!hint) {
+                        const h = document.createElement('div');
+                        h.className = 'amt-required-hint';
+                        h.style.cssText = 'font-size:11px;color:#00C853;font-weight:600;margin-top:4px;';
+                        h.textContent = '✅ Required — enter the amount charged to complete this appointment';
+                        amtWrap.appendChild(h);
+                    }
+                }
+            } else {
+                amtEl.style.borderColor = '#E5E7EB';
+                amtEl.style.boxShadow = '';
+                const hint = amtWrap ? amtWrap.querySelector('.amt-required-hint') : null;
+                if (hint) hint.remove();
+            }
+        }
     }
 
     async function saveStatus() {
@@ -4350,6 +4398,20 @@
             showToast('⚠️ Please select a status first', 'warning'); return;
         }
         if (!currentUser) { showToast('❌ Please login first', 'error'); return; }
+
+        const amountVal = parseFloat(document.getElementById('sm-amount')?.value) || 0;
+
+        // Require amount when marking as Completed
+        if (_selectedNewStatus === 'Completed' && amountVal <= 0) {
+            const amtEl = document.getElementById('sm-amount');
+            if (amtEl) {
+                amtEl.style.borderColor = '#FF6B6B';
+                amtEl.style.boxShadow = '0 0 0 3px rgba(255,107,107,0.2)';
+                amtEl.focus();
+            }
+            showToast('⚠️ Please enter the consultation fee before marking as Completed', 'warning');
+            return;
+        }
 
         const saveBtn = document.getElementById('sm-save-btn');
         saveBtn.textContent = '⏳ Saving...';
@@ -4359,7 +4421,6 @@
         const note      = document.getElementById('sm-note')?.value?.trim();
         const oldReason = _currentAppt.reason || '';
         const newReason = note ? (oldReason ? oldReason + ' | ' + note : note) : oldReason;
-        const amountVal = parseFloat(document.getElementById('sm-amount')?.value) || 0;
 
         try {
             const r = await fetch(`/api/appointments/${_currentAppt.id}`, {
@@ -5864,6 +5925,9 @@
                 <a href="#" class="dropdown-item" onclick="showPage('emailsettings')">
                     <div class="dropdown-icon">📧</div><div><div style="font-weight:600;">Email Settings</div><div style="font-size:12px;color:#6B7280;">Configure Gmail & test</div></div>
                 </a>
+                <a href="#" class="dropdown-item" onclick="showPage('ambulance')">
+                    <div class="dropdown-icon">🚨</div><div><div style="font-weight:600;">Emergency Services</div><div style="font-size:12px;color:#6B7280;">Manage emergency listings</div></div>
+                </a>
             </div>`;
             nav.appendChild(li);
         }
@@ -5949,6 +6013,158 @@
         } finally {
             if (testBtn) { testBtn.disabled = false; testBtn.textContent = '📤 Send Test Email'; }
         }
+    }
+
+
+    // ── Emergency Services ────────────────────────────────────────────────────
+    let _emergServices = [];
+
+    async function loadEmergencyServices() {
+        try {
+            _emergServices = await fetch('/api/emergency/services').then(r => r.json());
+        } catch(e) { _emergServices = []; }
+        renderEmergencyServices();
+        renderEmergencyAdminPanel();
+        // Show admin panel for admin users
+        const panel = document.getElementById('emerg-admin-panel');
+        if (panel) panel.style.display = currentUser && currentUser.role === 'admin' ? 'block' : 'none';
+        // Update stats
+        const statEl = document.getElementById('emerg-stat-total');
+        if (statEl) statEl.textContent = _emergServices.length;
+    }
+
+    function renderEmergencyServices() {
+        const grid = document.getElementById('emerg-services-grid');
+        if (!grid) return;
+        if (!_emergServices.length) {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">No emergency services configured yet.</div>';
+            return;
+        }
+        grid.innerHTML = _emergServices.map(s => `
+            <div style="background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border-top:4px solid #FF4444;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:36px;">${s.icon}</span>
+                    <div>
+                        <h3 style="margin:0;font-size:16px;font-weight:700;">${s.name}</h3>
+                        <span style="background:#FFF1F1;color:#CC0000;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">⏱ ${s.response_time}</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--text-gray);font-size:13px;line-height:1.6;">${s.description || ''}</p>
+                ${s.phone ? `<a href="tel:${s.phone}" style="display:inline-flex;align-items:center;gap:6px;background:#FF4444;color:white;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;width:fit-content;">📞 ${s.phone}</a>` : ''}
+            </div>`).join('');
+    }
+
+    function renderEmergencyAdminPanel() {
+        const wrap = document.getElementById('emerg-admin-table-wrap');
+        if (!wrap) return;
+        if (!_emergServices.length) {
+            wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-gray);">No services yet. Click "+ Add Service" to get started.</div>';
+            return;
+        }
+        wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#F9FAFB;">
+                <th style="padding:10px 14px;text-align:left;">Icon</th>
+                <th style="padding:10px 14px;text-align:left;">Name</th>
+                <th style="padding:10px 14px;text-align:left;">Phone</th>
+                <th style="padding:10px 14px;text-align:left;">Response</th>
+                <th style="padding:10px 14px;text-align:left;">Order</th>
+                <th style="padding:10px 14px;text-align:right;">Actions</th>
+            </tr></thead>
+            <tbody>${_emergServices.map(s => `<tr style="border-top:1px solid #F3F4F6;">
+                <td style="padding:10px 14px;font-size:22px;">${s.icon}</td>
+                <td style="padding:10px 14px;font-weight:600;">${s.name}</td>
+                <td style="padding:10px 14px;color:#6B7280;">${s.phone || '—'}</td>
+                <td style="padding:10px 14px;">${s.response_time}</td>
+                <td style="padding:10px 14px;">${s.sort_order}</td>
+                <td style="padding:10px 14px;text-align:right;display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="openEmergEditModal(${s.id})" style="padding:5px 14px;border:1.5px solid #E5E7EB;background:white;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">✏️ Edit</button>
+                    <button onclick="deleteEmergService(${s.id})" style="padding:5px 14px;border:1.5px solid #FF6B6B;color:#FF6B6B;background:white;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">🗑 Remove</button>
+                </td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function openEmergAddModal() { openEmergModal(null); }
+    function openEmergEditModal(id) {
+        const svc = _emergServices.find(s => s.id === id);
+        if (svc) openEmergModal(svc);
+    }
+
+    function openEmergModal(svc) {
+        const isEdit = !!svc;
+        const div = document.createElement('div');
+        div.id = 'emergModal';
+        div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        div.innerHTML = `<div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <h3 style="margin:0 0 20px;font-size:18px;">${isEdit ? '✏️ Edit' : '➕ Add'} Emergency Service</h3>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Icon (emoji)</label>
+                    <input id="em-icon" class="form-input" value="${svc?.icon || '🚨'}" placeholder="🚨" style="font-size:22px;width:80px;">
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Service Name *</label>
+                    <input id="em-name" class="form-input" value="${svc?.name || ''}" placeholder="e.g. Cardiac Emergency">
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Description</label>
+                    <textarea id="em-desc" class="form-input" rows="2" placeholder="Brief description...">${svc?.description || ''}</textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Phone Number</label>
+                        <input id="em-phone" class="form-input" value="${svc?.phone || ''}" placeholder="1-800-XXXX">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Response Time</label>
+                        <input id="em-response" class="form-input" value="${svc?.response_time || '< 10 min'}" placeholder="< 10 min">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Sort Order (0 = first)</label>
+                    <input id="em-order" class="form-input" type="number" value="${svc?.sort_order ?? 0}" min="0">
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+                <button onclick="document.getElementById('emergModal').remove()" style="padding:10px 20px;border:1.5px solid #E5E7EB;background:white;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+                <button onclick="saveEmergService(${svc?.id || 'null'})" style="padding:10px 24px;background:#1a1f36;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;">${isEdit ? '💾 Save Changes' : '➕ Add Service'}</button>
+            </div>
+        </div>`;
+        document.body.appendChild(div);
+        div.addEventListener('click', e => { if (e.target === div) div.remove(); });
+    }
+
+    async function saveEmergService(id) {
+        const name = document.getElementById('em-name')?.value?.trim();
+        if (!name) { showToast('⚠️ Service name is required', 'warning'); return; }
+        const body = {
+            name,
+            icon:          document.getElementById('em-icon')?.value?.trim() || '🚨',
+            description:   document.getElementById('em-desc')?.value?.trim() || '',
+            phone:         document.getElementById('em-phone')?.value?.trim() || '',
+            response_time: document.getElementById('em-response')?.value?.trim() || '< 10 min',
+            sort_order:    parseInt(document.getElementById('em-order')?.value) || 0,
+        };
+        try {
+            const r = await fetch(id ? `/api/emergency/services/${id}` : '/api/emergency/services', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + d.error, 'error'); return; }
+            document.getElementById('emergModal')?.remove();
+            showToast(id ? '✅ Service updated' : '✅ Service added', 'success');
+            await loadEmergencyServices();
+        } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    }
+
+    async function deleteEmergService(id) {
+        if (!confirm('Remove this emergency service?')) return;
+        const r = await fetch(`/api/emergency/services/${id}`, { method: 'DELETE' });
+        const d = await r.json();
+        if (r.ok) { showToast('✅ Service removed', 'success'); await loadEmergencyServices(); }
+        else showToast('❌ ' + d.error, 'error');
     }
 
     </script>

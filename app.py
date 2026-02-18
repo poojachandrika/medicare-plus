@@ -1,19 +1,13 @@
 """
 MediCare Plus — Hospital Management System
-Production build: reads config from environment variables, never from hard-coded values.
-Compatible with Railway, Render, PythonAnywhere, and gunicorn.
+SQLite + Session Auth + Email Notifications
+
+Email config: edit MAIL_* settings below (uses Gmail SMTP)
 """
 
 from flask import Flask, render_template, request, jsonify, session
-import sqlite3, os, hashlib, secrets, logging
-from datetime import date, datetime, timedelta
-
-# Load .env when running locally (python-dotenv is in requirements.txt)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+import sqlite3, os, hashlib, secrets
+from datetime import date, datetime
 
 # Email imports
 import smtplib
@@ -21,53 +15,21 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import threading
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  ALL sensitive settings come from environment variables.
-#  Set them in the Railway dashboard → Variables tab.
-#  For local dev, copy .env.example → .env and fill in values.
-# ─────────────────────────────────────────────────────────────────────────────
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# On Railway, DB lives on the persistent Volume mounted at /data
-_db_env = os.environ.get('DB_PATH', '').strip()
-DB_PATH = _db_env if _db_env else os.path.join(BASE_DIR, 'hospital.db')
-
-# Secret key — MUST be set as env var. Railway auto-generates one if you use the template.
-_secret = os.environ.get('SECRET_KEY', '').strip()
-if not _secret:
-    logging.warning("SECRET_KEY not set — using a temporary key. Set it in Railway Variables tab.")
-    _secret = secrets.token_hex(32)   # random each restart; sessions won't survive restarts
-
 app = Flask(__name__)
-app.secret_key = _secret
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH  = os.path.join(BASE_DIR, 'hospital.db')
+app.secret_key = 'medicare-secret-key-2026-change-in-production'
 
-# Secure session cookie settings
-app.config.update(
-    SESSION_COOKIE_HTTPONLY   = True,
-    SESSION_COOKIE_SAMESITE   = 'Lax',
-    SESSION_COOKIE_SECURE     = (os.environ.get('FLASK_ENV') == 'production'),
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=8),
-)
+# ─────────────────────────────────────────────────────────────────────────────
+#  EMAIL SETTINGS  — configurable from Admin Panel in the browser
+#  OR edit directly here
+# ─────────────────────────────────────────────────────────────────────────────
+MAIL_HOST     = 'smtp.gmail.com'
+MAIL_PORT     = 587
+HOSPITAL_NAME = 'MediCare Plus Hospital'
+HOSPITAL_PHONE= '+1-800-MEDICARE'
 
-# Hospital branding — safe to set via env vars or leave as defaults
-HOSPITAL_NAME  = os.environ.get('HOSPITAL_NAME',  'MediCare Plus Hospital')
-HOSPITAL_PHONE = os.environ.get('HOSPITAL_PHONE', '+1-800-MEDICARE')
-
-MAIL_HOST = 'smtp.gmail.com'
-MAIL_PORT = 587
-
-# ── Security headers on every response ───────────────────────────────────────
-@app.after_request
-def set_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options']        = 'SAMEORIGIN'
-    response.headers['X-XSS-Protection']       = '1; mode=block'
-    response.headers['Referrer-Policy']        = 'strict-origin-when-cross-origin'
-    response.headers.pop('Server', None)
-    return response
-
-EMAIL_CONFIG_FILE = os.path.join(os.path.dirname(DB_PATH), 'email_config.json')
+EMAIL_CONFIG_FILE = os.path.join(BASE_DIR, 'email_config.json')
 
 def load_email_config():
     """Load email config from file, fallback to defaults."""
@@ -496,6 +458,17 @@ CREATE TABLE IF NOT EXISTS radiology_bookings (
     notes TEXT, amount REAL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS emergency_services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '🚨',
+    description TEXT,
+    phone TEXT,
+    response_time TEXT DEFAULT '< 10 min',
+    active INTEGER DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
 """
 
 # ── Seed ──────────────────────────────────────────────────────────────────────
@@ -679,6 +652,17 @@ RADIOLOGY_SEED = [
     ("PET-CT Scan","Nuclear Medicine","Whole-body metabolic imaging for cancer staging, recurrence detection.",18000,"Fasting 6 hours; blood sugar < 200 mg/dL; no exercise day before",90),
 ]
 
+EMERGENCY_SERVICES_SEED = [
+    ("Ambulance Dispatch", "🚑", "24/7 emergency ambulance dispatch with GPS-tracked vehicles.", "1-800-AMBULANCE", "< 8 min", 0),
+    ("Trauma Care", "🏥", "Level 1 trauma center with dedicated surgical teams on standby.", "1-800-TRAUMA", "Immediate", 1),
+    ("Cardiac Emergency", "❤️", "Rapid response for heart attacks, chest pain, and cardiac events.", "1-800-CARDIAC", "< 5 min", 2),
+    ("Stroke Response", "🧠", "Fast-track stroke protocol — CT scan and treatment within 60 minutes.", "1-800-STROKE", "< 10 min", 3),
+    ("Pediatric Emergency", "👶", "Dedicated emergency care for infants and children.", "1-800-PEDS-ER", "< 10 min", 4),
+    ("Poison Control", "⚗️", "24/7 guidance for poisoning, overdose, and toxic exposure.", "1-800-POISON", "Immediate", 5),
+    ("Burns & Critical Care", "🔥", "Specialized burn unit and ICU for critical injuries.", "1-800-BURNS", "< 15 min", 6),
+    ("Mental Health Crisis", "🧩", "Emergency psychiatric support and crisis intervention team.", "1-800-CRISIS", "< 20 min", 7),
+]
+
 def create_tables():
     with get_db() as conn:
         conn.executescript(SCHEMA)
@@ -704,14 +688,13 @@ def seed_database():
         if query("SELECT COUNT(*) as c FROM radiology_services", one=True)['c'] == 0:
             for name,modality,desc,price,prep,duration in RADIOLOGY_SEED:
                 execute("INSERT INTO radiology_services (name,modality,description,price,preparation,duration_minutes) VALUES (?,?,?,?,?,?)",(name,modality,desc,price,prep,duration))
+        if query("SELECT COUNT(*) as c FROM emergency_services", one=True)['c'] == 0:
+            for name,icon,desc,phone,response_time,sort_order in EMERGENCY_SERVICES_SEED:
+                execute("INSERT INTO emergency_services (name,icon,description,phone,response_time,sort_order) VALUES (?,?,?,?,?,?)",(name,icon,desc,phone,response_time,sort_order))
         return
     print("Seeding database...")
-    # Admin credentials from env vars — never hard-coded
-    admin_user  = os.environ.get('ADMIN_USERNAME', 'admin')
-    admin_email = os.environ.get('ADMIN_EMAIL',    'admin@medicare.com')
-    admin_pw    = os.environ.get('ADMIN_PASSWORD',  'admin123')
     for uname,email,pw,role,fname in [
-        (admin_user, admin_email, admin_pw, "admin", "System Admin"),
+        ("admin","admin@medicare.com","admin123","admin","System Admin"),
         ("doctor1","doctor@medicare.com","doctor123","doctor","Dr. House"),
         ("staff1","staff@medicare.com","staff123","staff","Nurse Joy"),
     ]:
@@ -735,6 +718,9 @@ def seed_database():
     # Seed radiology services
     for name,modality,desc,price,prep,duration in RADIOLOGY_SEED:
         execute("INSERT INTO radiology_services (name,modality,description,price,preparation,duration_minutes) VALUES (?,?,?,?,?,?)",(name,modality,desc,price,prep,duration))
+    # Seed emergency services
+    for name,icon,desc,phone,response_time,sort_order in EMERGENCY_SERVICES_SEED:
+        execute("INSERT INTO emergency_services (name,icon,description,phone,response_time,sort_order) VALUES (?,?,?,?,?,?)",(name,icon,desc,phone,response_time,sort_order))
     print("Seeding complete.")
 
 # ── Auth routes ───────────────────────────────────────────────────────────────
@@ -750,15 +736,13 @@ def api_login():
     p = d.get('password','').strip()
     if not u or not p:
         return jsonify({'error':'Username and password required'}), 400
-    import time; time.sleep(0.4)   # slow brute-force attempts
     user = query("SELECT * FROM users WHERE (username=? OR email=?) AND password=?",(u,u,hash_pw(p)),one=True)
     if not user:
         return jsonify({'error':'Invalid username or password'}), 401
-    session['user_id']   = user['id']
-    session['username']  = user['username']
-    session['role']      = user['role']
-    session['full_name'] = user['full_name'] or user['username']
-    session.permanent    = True
+    session['user_id']  = user['id']
+    session['username'] = user['username']
+    session['role']     = user['role']
+    session['full_name']= user['full_name'] or user['username']
     return jsonify({'message':'Login successful','user':{'id':user['id'],'username':user['username'],'role':user['role'],'full_name':user['full_name']}})
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -1103,6 +1087,42 @@ def report_financial():
         }
     })
 
+# ── Emergency Services API ────────────────────────────────────────────────────
+
+@app.route('/api/emergency/services', methods=['GET', 'POST'])
+def api_emergency_services():
+    if request.method == 'POST':
+        err = require_login()
+        if err: return err
+        if session.get('role') != 'admin':
+            return jsonify({'error': 'Admin only'}), 403
+        d = request.json or {}
+        nid = execute(
+            "INSERT INTO emergency_services (name,icon,description,phone,response_time,sort_order) VALUES (?,?,?,?,?,?)",
+            (d.get('name',''), d.get('icon','🚨'), d.get('description',''),
+             d.get('phone',''), d.get('response_time','< 10 min'), d.get('sort_order', 0)))
+        return jsonify({'message': 'Emergency service added', 'id': nid}), 201
+    return jsonify(query("SELECT * FROM emergency_services WHERE active=1 ORDER BY sort_order, id"))
+
+@app.route('/api/emergency/services/<int:sid>', methods=['PUT', 'DELETE'])
+def api_emergency_service(sid):
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    row = query("SELECT * FROM emergency_services WHERE id=?", (sid,), one=True)
+    if not row: return jsonify({'error': 'Not found'}), 404
+    if request.method == 'DELETE':
+        execute("UPDATE emergency_services SET active=0 WHERE id=?", (sid,))
+        return jsonify({'message': 'Service removed'})
+    d = request.json or {}
+    execute("UPDATE emergency_services SET name=?,icon=?,description=?,phone=?,response_time=?,sort_order=? WHERE id=?",
+        (d.get('name', row['name']), d.get('icon', row['icon']),
+         d.get('description', row['description']), d.get('phone', row['phone']),
+         d.get('response_time', row['response_time']),
+         d.get('sort_order', row['sort_order']), sid))
+    return jsonify({'message': 'Service updated'})
+
 @app.route('/api/admin/tables')
 def api_admin_tables():
     err = require_login()
@@ -1434,25 +1454,25 @@ def api_email_test():
     except Exception as e:
         return jsonify({'error': f'Error: {type(e).__name__}: {str(e)}'}), 500
 
-# ── App init — runs for both  `python app.py`  and  gunicorn  ─────────────────
-def _init():
-    db_dir = os.path.dirname(DB_PATH)
-    if db_dir:
-        os.makedirs(db_dir, exist_ok=True)   # ensure /data exists on Railway volume
+# ── Startup ───────────────────────────────────────────────────────────────────
+if __name__ == '__main__':
     create_tables()
     seed_database()
-
-_init()   # called at import time so gunicorn picks it up automatically
-
-# ── Startup (direct run only) ─────────────────────────────────────────────────
-if __name__ == '__main__':
-    is_dev = os.environ.get('FLASK_ENV', 'production') != 'production'
-    port   = int(os.environ.get('PORT', 5000))
-    print(f"\n{'='*55}")
+    print("\n" + "="*60)
     print("  🏥  MediCare Plus — Hospital Management System")
-    print(f"{'='*55}")
+    print("="*60)
     print(f"  📂  Database : {DB_PATH}")
-    print(f"  🌐  Open     : http://localhost:{port}")
-    print(f"  🔒  Mode     : {'DEVELOPMENT ⚠️' if is_dev else 'PRODUCTION ✅'}")
-    print(f"{'='*55}\n")
-    app.run(debug=is_dev, host='0.0.0.0', port=port)
+    _u, _p, _en = get_mail_settings()
+    _email_st = f'ENABLED ({_u})' if (_en and _u) else 'NOT CONFIGURED — Admin → Email Settings'
+    print(f'  📧  Email    : {_email_st}')
+    print('  🌐  Open     : http://localhost:5000')
+    print()
+    print('  🔑  Login accounts:')
+    print('      admin  / admin123   (full access)')
+    print('      staff1 / staff123   (limited access)')
+    print()
+    if not (_en and _u):
+        print('  ⚠️   EMAIL: Login as admin → Admin → Email Settings to configure')
+    print("  🛑  Stop: CTRL+C")
+    print("="*60 + "\n")
+    app.run(debug=True, host='0.0.0.0', port=5000)
