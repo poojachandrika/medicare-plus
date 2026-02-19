@@ -792,13 +792,14 @@ def api_login():
     user = query("SELECT * FROM users WHERE (username=? OR email=?) AND password=?",(u,u,hash_pw(p)),one=True)
     if not user:
         return jsonify({'error':'Invalid username or password'}), 401
+    doctor_id = user.get('doctor_id') if 'doctor_id' in user else None
     session['user_id']   = user['id']
     session['username']  = user['username']
     session['role']      = user['role']
     session['full_name'] = user['full_name'] or user['username']
-    session['doctor_id'] = user.get('doctor_id')
+    session['doctor_id'] = doctor_id
     session.permanent    = True
-    return jsonify({'message':'Login successful','user':{'id':user['id'],'username':user['username'],'role':user['role'],'full_name':user['full_name'],'doctor_id':user.get('doctor_id')}})
+    return jsonify({'message':'Login successful','user':{'id':user['id'],'username':user['username'],'role':user['role'],'full_name':user['full_name'],'doctor_id':doctor_id}})
 
 @app.route('/api/auth/logout', methods=['POST'])
 def api_logout():
@@ -879,6 +880,56 @@ def api_doctors():
     if dept:
         return jsonify(query(f"SELECT * FROM doctors WHERE department=?{avail_filter} ORDER BY name",(dept,)))
     return jsonify(query(f"SELECT * FROM doctors WHERE 1=1{avail_filter} ORDER BY department,name"))
+
+@app.route('/api/admin/reset-db', methods=['POST'])
+def api_reset_db():
+    """Wipe doctors/users and reseed cleanly. Admin only."""
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+
+    print("🔄 DB Reset triggered by admin...")
+
+    # Remove all doctors, their user accounts, appointments, patients
+    execute("DELETE FROM users WHERE role='doctor'")
+    execute("DELETE FROM users WHERE username IN ('doctor1','staff1')")
+    execute("DELETE FROM doctors")
+    execute("DELETE FROM appointments")
+    execute("DELETE FROM patients")
+
+    # Reset ID sequences so everything starts from 1
+    for tbl in ['doctors','users','appointments','patients']:
+        try: execute(f"DELETE FROM sqlite_sequence WHERE name='{tbl}'")
+        except: pass
+
+    # Keep admin account intact
+    admin_user  = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_email = os.environ.get('ADMIN_EMAIL',    'admin@medicare.com')
+    admin_pw    = os.environ.get('ADMIN_PASSWORD',  'admin123')
+    execute("INSERT OR IGNORE INTO users (username,email,password,role,full_name) VALUES (?,?,?,?,?)",
+        (admin_user, admin_email, hash_pw(admin_pw), 'admin', 'System Admin'))
+
+    # Reseed all 37 doctors cleanly
+    doctor_creds = []
+    for name, spec, dept, exp, qual in DOCTORS_SEED:
+        did = execute("INSERT INTO doctors (name,specialization,department,experience,qualification) VALUES (?,?,?,?,?)",
+            (name, spec, dept, exp, qual))
+        creds = create_doctor_user(did, name)
+        if creds:
+            doctor_creds.append({'id': did, 'name': name, 'username': creds['username'], 'password': creds['password']})
+            print(f"  ✅ {name} → {creds['username']} / {creds['password']}")
+
+    # Reseed sample patients
+    for fn,ln,dob,gender,bg,contact,email in PATIENTS_SEED:
+        execute("INSERT INTO patients (first_name,last_name,date_of_birth,gender,blood_group,contact,email) VALUES (?,?,?,?,?,?,?)",
+            (fn,ln,dob,gender,bg,contact,email))
+
+    print(f"✅ Reset complete. {len(doctor_creds)} doctors reseeded.")
+    return jsonify({
+        'message': f'✅ Reset complete! {len(doctor_creds)} doctors reseeded.',
+        'doctors': doctor_creds
+    })
 
 @app.route('/api/doctors/credentials')
 def api_doctor_credentials():
@@ -1640,15 +1691,21 @@ def api_email_test():
 # ── App init — runs for both  `python app.py`  and  gunicorn  ─────────────────
 def _migrate_doctor_users():
     """One-time migration: create user accounts for any doctor that doesn't have one yet."""
-    doctors = query("SELECT id, name, email FROM doctors ORDER BY id")
-    created = 0
-    for doc in doctors:
-        result = create_doctor_user(doc['id'], doc['name'], doc.get('email'))
-        if result:
-            created += 1
-            print(f"  ✅ Created login for {doc['name']} → {result['username']} / {result['password']}")
-    if created:
-        print(f"  🎉 Auto-migration: created {created} doctor login accounts")
+    try:
+        doctors = query("SELECT id, name, email FROM doctors ORDER BY id")
+        created = 0
+        for doc in doctors:
+            try:
+                result = create_doctor_user(doc['id'], doc['name'], doc.get('email'))
+                if result:
+                    created += 1
+                    print(f"  ✅ Created login for {doc['name']} → {result['username']} / {result['password']}")
+            except Exception as e:
+                print(f"  ⚠️ Skipped {doc['name']}: {e}")
+        if created:
+            print(f"  🎉 Auto-migration: created {created} doctor login accounts")
+    except Exception as e:
+        print(f"  ⚠️ Doctor migration skipped: {e}")
 
 def _init():
     db_dir = os.path.dirname(DB_PATH)
