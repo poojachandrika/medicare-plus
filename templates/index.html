@@ -1432,8 +1432,7 @@
             </nav>
 
             <div class="header-actions">
-                <button class="btn btn-outline" onclick="openModal('loginModal')">Login</button>
-                <button class="btn emergency-btn">🚨 Emergency</button>
+                <button class="btn btn-outline" id="loginBtn" onclick="openModal('loginModal')">Login</button>
             </div>
         </div>
     </header>
@@ -3113,10 +3112,6 @@
                 <div class="fab-item-icon">📅</div>
                 <span>Book Appointment</span>
             </a>
-            <a href="#" class="fab-item">
-                <div class="fab-item-icon">📞</div>
-                <span>Emergency Call</span>
-            </a>
             <a href="#" class="fab-item" onclick="openModal('patientModal')">
                 <div class="fab-item-icon">➕</div>
                 <span>Add Patient</span>
@@ -3134,15 +3129,47 @@
             </div>
             <div class="modal-body">
                 <div class="form-grid">
-                    <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="nu-fullname" class="form-input" placeholder="Full name"></div>
+                    <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="nu-fullname" class="form-input" placeholder="e.g. Dr. John Smith"></div>
                     <div class="form-group"><label class="form-label">Username *</label><input type="text" id="nu-username" class="form-input" placeholder="username" required></div>
                     <div class="form-group"><label class="form-label">Email *</label><input type="email" id="nu-email" class="form-input" placeholder="email@example.com" required></div>
                     <div class="form-group"><label class="form-label">Password *</label><input type="password" id="nu-password" class="form-input" placeholder="••••••••" required></div>
                     <div class="form-group"><label class="form-label">Role</label>
-                        <select id="nu-role" class="form-select">
+                        <select id="nu-role" class="form-select" onchange="toggleDoctorFields()">
                             <option value="staff">Staff</option>
+                            <option value="doctor">Doctor</option>
                             <option value="admin">Admin</option>
                         </select>
+                    </div>
+                </div>
+                <!-- Doctor-specific fields — shown only when role=doctor -->
+                <div id="nu-doctor-fields" style="display:none;margin-top:16px;border-top:2px dashed #E5E7EB;padding-top:16px;">
+                    <div style="font-size:13px;font-weight:700;color:#0066FF;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">👨‍⚕️ Doctor Profile Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Department *</label>
+                            <select id="nu-doc-department" class="form-select">
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Specialization *</label>
+                            <input type="text" id="nu-doc-specialization" class="form-input" placeholder="e.g. Cardiologist">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Qualification</label>
+                            <input type="text" id="nu-doc-qualification" class="form-input" placeholder="e.g. MD, FACC">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Experience (years)</label>
+                            <input type="number" id="nu-doc-experience" class="form-input" placeholder="e.g. 10" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contact</label>
+                            <input type="tel" id="nu-doc-contact" class="form-input" placeholder="+1-555-0000">
+                        </div>
+                    </div>
+                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:12px;color:#0369a1;margin-top:4px;">
+                        ℹ️ A doctor profile will be created automatically and login credentials shown after saving.
                     </div>
                 </div>
             </div>
@@ -3223,9 +3250,12 @@
                             <label class="form-label">Preferred Date *</label>
                             <input type="date" id="appt-date" class="form-input" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Preferred Time *</label>
-                            <input type="time" id="appt-time" class="form-input" required>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label">Available Time Slots * <span id="slot-loading" style="font-size:12px;color:#9CA3AF;display:none;">⏳ Loading slots...</span></label>
+                            <div id="appt-slots" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:6px;min-height:44px;">
+                                <div style="color:#9CA3AF;font-size:13px;grid-column:1/-1;">Select a doctor and date to see available slots.</div>
+                            </div>
+                            <input type="hidden" id="appt-time" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -3321,10 +3351,6 @@
                 <div class="fab-item-icon">📅</div>
                 <span>Book Appointment</span>
             </a>
-            <a href="#" class="fab-item">
-                <div class="fab-item-icon">📞</div>
-                <span>Emergency Call</span>
-            </a>
             <a href="#" class="fab-item" onclick="openModal('patientModal')">
                 <div class="fab-item-icon">➕</div>
                 <span>Add Patient</span>
@@ -3403,9 +3429,12 @@
                             <label class="form-label">Preferred Date *</label>
                             <input type="date" id="appt-date" class="form-input" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Preferred Time *</label>
-                            <input type="time" id="appt-time" class="form-input" required>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label">Available Time Slots * <span id="slot-loading" style="font-size:12px;color:#9CA3AF;display:none;">⏳ Loading slots...</span></label>
+                            <div id="appt-slots" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:6px;min-height:44px;">
+                                <div style="color:#9CA3AF;font-size:13px;grid-column:1/-1;">Select a doctor and date to see available slots.</div>
+                            </div>
+                            <input type="hidden" id="appt-time" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -3905,6 +3934,14 @@
             if (f) f.reset();
             const ds = document.getElementById('appt-doctor');
             if (ds) { ds.innerHTML = '<option value="">First select a department</option>'; ds.disabled = true; }
+            clearSlots();
+        }
+        if (id === 'addUserModal') {
+            document.getElementById('nu-role').value = 'staff';
+            document.getElementById('nu-doctor-fields').style.display = 'none';
+            ['nu-username','nu-email','nu-password','nu-fullname','nu-doc-specialization','nu-doc-qualification','nu-doc-experience','nu-doc-contact'].forEach(i => {
+                const el = document.getElementById(i); if (el) el.value = '';
+            });
         }
     }
 
@@ -4010,6 +4047,7 @@
             const docSel = document.getElementById('appt-doctor');
             docSel.innerHTML = '<option value="">Loading...</option>';
             docSel.disabled = true;
+            clearSlots();
             if (!this.value) { docSel.innerHTML = '<option value="">First select a department</option>'; return; }
             const deptName = depts.find(d => d.slug === this.value)?.name || this.value;
             const docs = await fetch(`/api/doctors?department=${encodeURIComponent(deptName)}`).then(r=>r.json());
@@ -4020,10 +4058,94 @@
                 docSel.appendChild(o);
             });
             docSel.disabled = false;
+            docSel.addEventListener('change', loadAvailableSlots);
         });
         docS.disabled = true;
         docS.innerHTML = '<option value="">First select a department</option>';
+        // Also trigger slot load when date changes
+        const dateEl = document.getElementById('appt-date');
+        if (dateEl) {
+            dateEl.removeEventListener('change', loadAvailableSlots);
+            dateEl.addEventListener('change', loadAvailableSlots);
+        }
         setMinDate();
+    }
+
+    function clearSlots() {
+        const slotsDiv = document.getElementById('appt-slots');
+        const hiddenTime = document.getElementById('appt-time');
+        if (slotsDiv) slotsDiv.innerHTML = '<div style="color:#9CA3AF;font-size:13px;grid-column:1/-1;">Select a doctor and date to see available slots.</div>';
+        if (hiddenTime) hiddenTime.value = '';
+    }
+
+    async function loadAvailableSlots() {
+        const docId = document.getElementById('appt-doctor')?.value;
+        const date  = document.getElementById('appt-date')?.value;
+        const slotsDiv = document.getElementById('appt-slots');
+        const loading  = document.getElementById('slot-loading');
+        const hiddenTime = document.getElementById('appt-time');
+        if (!slotsDiv) return;
+        if (!docId || !date) { clearSlots(); return; }
+
+        if (loading) loading.style.display = 'inline';
+        slotsDiv.innerHTML = '';
+        if (hiddenTime) hiddenTime.value = '';
+
+        try {
+            const slots = await fetch(`/api/appointments/available-slots?doctor_id=${docId}&date=${date}`).then(r=>r.json());
+            if (loading) loading.style.display = 'none';
+            if (!slots.length) {
+                slotsDiv.innerHTML = '<div style="color:#9CA3AF;font-size:13px;grid-column:1/-1;">No slots available.</div>';
+                return;
+            }
+            // Format time for display: "09:00" → "9:00 AM"
+            const fmt = t => {
+                const [h,m] = t.split(':').map(Number);
+                const ampm = h < 12 ? 'AM' : 'PM';
+                return `${h===0?12:h>12?h-12:h}:${String(m).padStart(2,'0')} ${ampm}`;
+            };
+            slots.forEach(s => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = fmt(s.time);
+                btn.style.cssText = `
+                    padding:8px 4px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+                    transition:all .15s;border:2px solid ${s.available ? '#E5E7EB' : '#F3F4F6'};
+                    background:${s.available ? 'white' : '#F3F4F6'};
+                    color:${s.available ? '#1a1f36' : '#D1D5DB'};
+                    pointer-events:${s.available ? 'auto' : 'none'};
+                `;
+                if (!s.available) {
+                    btn.title = 'Already booked';
+                    btn.style.textDecoration = 'line-through';
+                }
+                if (s.available) {
+                    btn.addEventListener('click', () => {
+                        // deselect all
+                        slotsDiv.querySelectorAll('button').forEach(b => {
+                            b.style.background = 'white';
+                            b.style.borderColor = '#E5E7EB';
+                            b.style.color = '#1a1f36';
+                        });
+                        // select this
+                        btn.style.background = '#0066FF';
+                        btn.style.borderColor = '#0066FF';
+                        btn.style.color = 'white';
+                        if (hiddenTime) hiddenTime.value = s.time;
+                    });
+                    btn.addEventListener('mouseenter', () => {
+                        if (hiddenTime?.value !== s.time) btn.style.background = '#e3f2fd';
+                    });
+                    btn.addEventListener('mouseleave', () => {
+                        if (hiddenTime?.value !== s.time) { btn.style.background = 'white'; }
+                    });
+                }
+                slotsDiv.appendChild(btn);
+            });
+        } catch(e) {
+            if (loading) loading.style.display = 'none';
+            slotsDiv.innerHTML = '<div style="color:red;font-size:13px;">Error loading slots.</div>';
+        }
     }
 
     async function submitAppointment() {
@@ -4129,8 +4251,9 @@
         'No-Show':   { cls:'status-critical',  icon:'🚫', color:'#9E9E9E', bg:'#f5f5f5', desc:'Patient did not show up' },
     };
     const STATUS_TRANSITIONS = {
-        admin: ['Pending','Confirmed','Completed','Cancelled','No-Show'],
-        staff: ['Confirmed','Cancelled'],
+        admin:  ['Pending','Confirmed','Completed','Cancelled','No-Show'],
+        doctor: ['Confirmed','Completed','Cancelled','No-Show'],
+        staff:  ['Confirmed','Cancelled'],
     };
 
     // Tracks what status is selected in the modal (before saving)
@@ -4492,7 +4615,6 @@
         setTimeout(async () => {
             const dS = document.getElementById('appt-department');
             if (dS) {
-                // Find slug for this dept name
                 const depts = await fetch('/api/departments').then(r=>r.json());
                 const match = depts.find(d => d.name === deptName || d.slug === deptName);
                 const slugVal = match ? match.slug : deptName;
@@ -4502,7 +4624,10 @@
                     const docS = document.getElementById('appt-doctor');
                     if (docS && doctorId) {
                         const opt = Array.from(docS.options).find(o => o.value == doctorId);
-                        if (opt) docS.value = opt.value;
+                        if (opt) {
+                            docS.value = opt.value;
+                            loadAvailableSlots();
+                        }
                     }
                 }, 900);
             }
@@ -4558,6 +4683,8 @@
         const isAdmin = currentUser && currentUser.role === 'admin';
 
         let filtered = allDoctors;
+        // Non-admins only see available (visible) doctors
+        if (!isAdmin) filtered = filtered.filter(d => d.available !== 0);
         if (dept)   filtered = filtered.filter(d => d.department === dept);
         if (search) filtered = filtered.filter(d =>
             d.name.toLowerCase().includes(search) ||
@@ -4577,13 +4704,24 @@
         grid.innerHTML = filtered.map(doc => {
             const deptObj = allDepts.find(d => d.name === doc.department);
             const icon = deptObj?.icon || '👨‍⚕️';
+            const isHidden = doc.available === 0;
+            const cardStyle = isAdmin && isHidden
+                ? 'display:flex;flex-direction:column;opacity:0.6;border:2px dashed #FFB800;background:#fffbeb;'
+                : 'display:flex;flex-direction:column;';
+            const hiddenBadge = isAdmin && isHidden
+                ? `<div style="background:#FFB800;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;align-self:flex-start;margin-bottom:6px;">🔒 Hidden from patients</div>`
+                : '';
             const adminBtns = isAdmin ? `
                 <div style="display:flex;gap:8px;margin-top:8px;">
                     <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12px;" onclick="openEditDoctorModal(${doc.id})">✏️ Edit</button>
-                    <button class="btn" style="flex:1;padding:7px;font-size:12px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="deleteDoctor(${doc.id},'${doc.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+                    <button class="btn" style="flex:1;padding:7px;font-size:12px;background:${isHidden?'#dcfce7;color:#16a34a;border:1px solid #bbf7d0':'#FEF3C7;color:#B45309;border:1px solid #FDE68A'};" onclick="toggleDoctorVisibility(${doc.id}, ${isHidden?1:0})">${isHidden ? '👁️ Show' : '🙈 Hide'}</button>
+                    <button class="btn" style="flex:1;padding:7px;font-size:12px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="deleteDoctor(${doc.id},'${doc.name.replace(/'/g,"\\'")}')">🗑️</button>
                 </div>` : '';
-            return `<div class="feature-card" style="display:flex;flex-direction:column;">
+            const bookBtn = isHidden && !isAdmin ? '' :
+                `<button class="btn btn-primary" style="margin-top:14px;width:100%;padding:9px;" onclick="bookWithDoctor('${doc.department.replace(/'/g,"\\'")}', ${doc.id})">📅 Book Appointment</button>`;
+            return `<div class="feature-card" style="${cardStyle}">
                 <div class="feature-icon">${icon}</div>
+                ${hiddenBadge}
                 <h3 style="font-size:16px;">${doc.name}</h3>
                 <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
                     <span style="display:inline-block;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);color:var(--primary);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;align-self:flex-start;">${doc.department}</span>
@@ -4592,10 +4730,24 @@
                     ${doc.experience ? `<p style="color:var(--text-gray);font-size:12px;">⏱ ${doc.experience} yrs experience</p>` : ''}
                     ${doc.contact ? `<p style="color:var(--text-gray);font-size:12px;">📞 ${doc.contact}</p>` : ''}
                 </div>
-                <button class="btn btn-primary" style="margin-top:14px;width:100%;padding:9px;" onclick="bookWithDoctor('${doc.department.replace(/'/g,"\\'")}', ${doc.id})">📅 Book Appointment</button>
+                ${bookBtn}
                 ${adminBtns}
             </div>`;
         }).join('');
+    }
+
+    async function toggleDoctorVisibility(docId, makeAvailable) {
+        try {
+            const r = await fetch(`/api/doctors/${docId}/availability`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ available: makeAvailable })
+            });
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Failed'), 'error'); return; }
+            showToast(makeAvailable ? '✅ Doctor is now visible to patients' : '🙈 Doctor hidden from patients', 'success');
+            await loadDoctorsPage();
+        } catch(e) { showToast('❌ Network error', 'error'); }
     }
 
     function openAddDoctorModal() {
@@ -4663,16 +4815,88 @@
             let r;
             if (editId) {
                 r = await fetch(`/api/doctors/${editId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const d = await r.json();
+                if (!r.ok) { showToast('❌ ' + (d.error||'Save failed'), 'error'); return; }
+                closeModal('doctorModal');
+                showToast('✅ Doctor updated successfully!', 'success');
             } else {
                 r = await fetch('/api/doctors', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const d = await r.json();
+                if (!r.ok) { showToast('❌ ' + (d.error||'Save failed'), 'error'); return; }
+                closeModal('doctorModal');
+                // Show login credentials popup
+                if (d.login_credentials) {
+                    showDoctorCredentials(name, d.login_credentials);
+                } else {
+                    showToast('✅ Doctor added successfully!', 'success');
+                }
             }
-            const d = await r.json();
-            if (!r.ok) { showToast('❌ ' + (d.error||'Save failed'), 'error'); return; }
-            closeModal('doctorModal');
-            showToast(`✅ Doctor ${editId ? 'updated' : 'added'} successfully!`, 'success');
             await loadDoctorsPage();
         } catch(e) { showToast('❌ Network error', 'error'); }
         finally { btn.disabled=false; btn.textContent='Save Doctor'; }
+    }
+
+    function showDoctorCredentials(doctorName, creds) {
+        // Remove existing if any
+        const old = document.getElementById('credentialsModal');
+        if (old) old.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'credentialsModal';
+        overlay.className = 'modal-overlay active';
+        overlay.style.cssText = 'z-index:9999;';
+        overlay.innerHTML = `
+        <div class="modal" style="max-width:460px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#00C853,#00A846);border-radius:20px 20px 0 0;">
+                <div>
+                    <h2 class="modal-title" style="color:white;margin:0;">🔐 Doctor Login Created</h2>
+                    <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:3px;">Save these credentials — password won't be shown again</div>
+                </div>
+                <button onclick="document.getElementById('credentialsModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <div style="background:#f0fdf4;border:2px solid #00C853;border-radius:12px;padding:20px;margin-bottom:20px;">
+                    <div style="font-size:15px;font-weight:700;color:#1a1f36;margin-bottom:16px;">👨‍⚕️ ${doctorName}</div>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:white;border-radius:8px;padding:12px 16px;border:1px solid #E5E7EB;">
+                            <div>
+                                <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:600;">Username</div>
+                                <div style="font-size:17px;font-weight:800;color:#1a1f36;font-family:monospace;letter-spacing:0.5px;">${creds.username}</div>
+                            </div>
+                            <button onclick="navigator.clipboard.writeText('${creds.username}');showToast('✅ Username copied!','success')"
+                                style="background:#0066FF;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;">Copy</button>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:white;border-radius:8px;padding:12px 16px;border:1px solid #E5E7EB;">
+                            <div>
+                                <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:600;">Password</div>
+                                <div style="font-size:17px;font-weight:800;color:#1a1f36;font-family:monospace;letter-spacing:0.5px;">${creds.password}</div>
+                            </div>
+                            <button onclick="navigator.clipboard.writeText('${creds.password}');showToast('✅ Password copied!','success')"
+                                style="background:#0066FF;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="background:#fff8e1;border:1px solid #FFB800;border-radius:8px;padding:12px;font-size:13px;color:#92400e;">
+                    ⚠️ <strong>Please note these down now.</strong> The password is not stored in plain text and cannot be retrieved later. The doctor can log in at <strong>/</strong> using these credentials.
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:flex-end;gap:10px;">
+                <button onclick="
+                    const t='Doctor: ${doctorName}\\nUsername: ${creds.username}\\nPassword: ${creds.password}';
+                    navigator.clipboard.writeText(t);
+                    showToast('✅ All credentials copied!','success');"
+                    style="padding:10px 20px;background:#1a1f36;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">
+                    📋 Copy All
+                </button>
+                <button onclick="document.getElementById('credentialsModal').remove()"
+                    style="padding:10px 24px;background:#00C853;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">
+                    ✅ Got it!
+                </button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     }
 
     async function deleteDoctor(docId, docName) {
@@ -5750,6 +5974,34 @@
         });
     }
 
+    async function toggleDoctorFields() {
+        const role = document.getElementById('nu-role')?.value;
+        const fields = document.getElementById('nu-doctor-fields');
+        if (!fields) return;
+        if (role === 'doctor') {
+            fields.style.display = 'block';
+            // Always reload departments fresh
+            const dSel = document.getElementById('nu-doc-department');
+            if (dSel) {
+                dSel.innerHTML = '<option value="">Loading departments...</option>';
+                try {
+                    const depts = await fetch('/api/departments').then(r => r.json());
+                    dSel.innerHTML = '<option value="">Select Department</option>';
+                    depts.forEach(d => {
+                        const o = document.createElement('option');
+                        o.value = d.name;
+                        o.textContent = `${d.icon || '🏥'} ${d.name}`;
+                        dSel.appendChild(o);
+                    });
+                } catch(e) {
+                    dSel.innerHTML = '<option value="">Failed to load — refresh page</option>';
+                }
+            }
+        } else {
+            fields.style.display = 'none';
+        }
+    }
+
     async function submitAddUser() {
         const un = document.getElementById('nu-username')?.value?.trim();
         const em = document.getElementById('nu-email')?.value?.trim();
@@ -5757,6 +6009,46 @@
         const fn = document.getElementById('nu-fullname')?.value?.trim();
         const rl = document.getElementById('nu-role')?.value;
         if (!un||!em||!pw){ showToast('❌ Username, email and password are required', 'error'); return; }
+
+        if (rl === 'doctor') {
+            const dept = document.getElementById('nu-doc-department')?.value;
+            const spec = document.getElementById('nu-doc-specialization')?.value?.trim();
+            if (!dept) { showToast('❌ Please select a department for the doctor', 'error'); return; }
+            if (!spec) { showToast('❌ Please enter a specialization for the doctor', 'error'); return; }
+
+            // Step 1: Create doctor profile
+            const docPayload = {
+                name:           fn || un,
+                department:     dept,
+                specialization: spec,
+                qualification:  document.getElementById('nu-doc-qualification')?.value?.trim() || '',
+                experience:     parseInt(document.getElementById('nu-doc-experience')?.value) || 0,
+                contact:        document.getElementById('nu-doc-contact')?.value?.trim() || '',
+                email:          em
+            };
+            const docR = await fetch('/api/doctors', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(docPayload) });
+            const docD = await docR.json();
+            if (!docR.ok) { showToast('❌ Could not create doctor profile: ' + (docD.error||''), 'error'); return; }
+
+            // Step 2: Update the auto-created user account with the chosen username/password
+            // The doctor user was auto-created by create_doctor_user — update it
+            const updateR = await fetch(`/api/doctors/${docD.id}/update-user`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ username: un, email: em, password: pw, full_name: fn || un })
+            });
+            const updateD = await updateR.json();
+            if (!updateR.ok) { showToast('❌ Doctor profile created but login update failed: ' + (updateD.error||''), 'error'); return; }
+
+            closeModal('addUserModal');
+            loadUsersTable();
+            await loadDoctorsPage();
+            // Show credentials popup
+            showDoctorCredentials(fn || un, { username: un, password: pw });
+            return;
+        }
+
+        // Normal user creation (staff/admin)
         const r = await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:un,email:em,password:pw,full_name:fn,role:rl})});
         const d = await r.json();
         if (!r.ok){ showToast('❌ '+d.error, 'error'); return; }

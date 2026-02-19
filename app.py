@@ -15,16 +15,11 @@ try:
 except ImportError:
     pass
 
-# Email — uses SendGrid API (works on Railway, no SMTP port blocking)
-# pip install sendgrid  (added to requirements.txt)
+# Email imports
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import threading
-try:
-    from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail, To, From, Subject, HtmlContent
-    SENDGRID_AVAILABLE = True
-except ImportError:
-    SENDGRID_AVAILABLE = False
-    print("⚠️  sendgrid package not installed — email disabled")
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  ALL sensitive settings come from environment variables.
@@ -131,31 +126,33 @@ def require_login():
 # ── Email ─────────────────────────────────────────────────────────────────────
 
 def send_email_async(to_email, subject, html_body):
-    """Send email via SendGrid API — works on Railway (no SMTP port blocking)."""
+    """Send email in background thread so it doesn't slow down the API."""
     username, password, enabled = get_mail_settings()
     if not enabled or not username or not password:
-        print("⚠️  Email skipped — not configured. Go to Admin → Email Settings to set up.")
+        print(f"⚠️  Email skipped — not configured. Go to Admin → Email Settings to set up.")
         return
     if not to_email or '@' not in to_email:
         print(f"⚠️  Email skipped — invalid recipient: {to_email}")
         return
-    if not SENDGRID_AVAILABLE:
-        print("⚠️  Email skipped — sendgrid package not installed.")
-        return
     def _send():
         try:
-            # password field holds the SendGrid API key
-            sg = SendGridAPIClient(api_key=password)
-            message = Mail(
-                from_email=(username, HOSPITAL_NAME),
-                to_emails=to_email,
-                subject=subject,
-                html_content=html_body
-            )
-            response = sg.send(message)
-            print(f"✅ Email sent to {to_email} — status {response.status_code}")
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From']    = f'{HOSPITAL_NAME} <{username}>'
+            msg['To']      = to_email
+            msg.attach(MIMEText(html_body, 'html'))
+            with smtplib.SMTP(MAIL_HOST, MAIL_PORT, timeout=15) as server:
+                server.ehlo()
+                server.starttls()
+                server.login(username, password)
+                server.sendmail(username, to_email, msg.as_string())
+            print(f"✅ Email sent to {to_email}")
+        except smtplib.SMTPAuthenticationError:
+            print("❌ Gmail authentication failed. Check username/password in Admin → Email Settings.")
+        except smtplib.SMTPException as e:
+            print(f"❌ SMTP error: {e}")
         except Exception as e:
-            print(f"❌ Email error: {type(e).__name__}: {e}")
+            print(f"❌ Email error: {e}")
     threading.Thread(target=_send, daemon=True).start()
 
 def build_confirmation_email(patient_name, doctor_name, department, appt_date, appt_time, reason, appt_id):
@@ -426,7 +423,8 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL, email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL, role TEXT DEFAULT 'staff',
-    full_name TEXT, created_at TEXT DEFAULT (datetime('now'))
+    full_name TEXT, doctor_id INTEGER REFERENCES doctors(id),
+    created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -682,6 +680,35 @@ RADIOLOGY_SEED = [
     ("PET-CT Scan","Nuclear Medicine","Whole-body metabolic imaging for cancer staging, recurrence detection.",18000,"Fasting 6 hours; blood sugar < 200 mg/dL; no exercise day before",90),
 ]
 
+def generate_doctor_credentials(doctor_name, doctor_id):
+    """Generate a username and password for a doctor based on their name and ID."""
+    # Strip "Dr." prefix and generate slug: dr_sarahwilson
+    clean = doctor_name.lower().replace('dr.','').replace('dr ','').strip()
+    parts = clean.split()
+    username = 'dr_' + ''.join(parts)  # e.g. dr_sarahwilson
+    # Make unique if collision: append doctor_id
+    existing = query("SELECT id FROM users WHERE username=?",(username,),one=True)
+    if existing:
+        username = f'dr_{parts[0]}{doctor_id}'
+    # Password: first part of name + id, e.g. sarah#12
+    password = f"{parts[0]}#{doctor_id}"
+    return username, password
+
+def create_doctor_user(doctor_id, doctor_name, doctor_email=None):
+    """Create a user account for a doctor if one doesn't already exist."""
+    # Check if user already linked to this doctor
+    existing = query("SELECT id FROM users WHERE doctor_id=?",(doctor_id,),one=True)
+    if existing:
+        return None
+    username, password = generate_doctor_credentials(doctor_name, doctor_id)
+    email = doctor_email or f"{username}@medicare.com"
+    # If email already exists, modify it
+    if query("SELECT id FROM users WHERE email=?",(email,),one=True):
+        email = f"{username}{doctor_id}@medicare.com"
+    uid = execute("INSERT OR IGNORE INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
+        (username, email, hash_pw(password), 'doctor', doctor_name, doctor_id))
+    return {'username': username, 'password': password, 'email': email}
+
 def create_tables():
     with get_db() as conn:
         conn.executescript(SCHEMA)
@@ -692,6 +719,13 @@ def create_tables():
         if 'amount' not in cols:
             execute("ALTER TABLE appointments ADD COLUMN amount REAL DEFAULT 0")
             print("✅ Migration: added 'amount' column to appointments")
+    except Exception as e:
+        print(f"Migration note: {e}")
+    try:
+        ucols = [r['name'] for r in query("PRAGMA table_info(users)")]
+        if 'doctor_id' not in ucols:
+            execute("ALTER TABLE users ADD COLUMN doctor_id INTEGER REFERENCES doctors(id)")
+            print("✅ Migration: added 'doctor_id' column to users")
     except Exception as e:
         print(f"Migration note: {e}")
 
@@ -723,7 +757,8 @@ def seed_database():
     for slug,name,desc in DEPARTMENTS_SEED:
         execute("INSERT OR IGNORE INTO departments (slug,name,description) VALUES (?,?,?)",(slug,name,desc))
     for name,spec,dept,exp,qual in DOCTORS_SEED:
-        execute("INSERT INTO doctors (name,specialization,department,experience,qualification) VALUES (?,?,?,?,?)",(name,spec,dept,exp,qual))
+        did = execute("INSERT INTO doctors (name,specialization,department,experience,qualification) VALUES (?,?,?,?,?)",(name,spec,dept,exp,qual))
+        create_doctor_user(did, name)
     for fn,ln,dob,gender,bg,contact,email in PATIENTS_SEED:
         execute("INSERT INTO patients (first_name,last_name,date_of_birth,gender,blood_group,contact,email) VALUES (?,?,?,?,?,?,?)",(fn,ln,dob,gender,bg,contact,email))
     today = date.today().strftime('%Y-%m-%d')
@@ -761,8 +796,9 @@ def api_login():
     session['username']  = user['username']
     session['role']      = user['role']
     session['full_name'] = user['full_name'] or user['username']
+    session['doctor_id'] = user.get('doctor_id')
     session.permanent    = True
-    return jsonify({'message':'Login successful','user':{'id':user['id'],'username':user['username'],'role':user['role'],'full_name':user['full_name']}})
+    return jsonify({'message':'Login successful','user':{'id':user['id'],'username':user['username'],'role':user['role'],'full_name':user['full_name'],'doctor_id':user.get('doctor_id')}})
 
 @app.route('/api/auth/logout', methods=['POST'])
 def api_logout():
@@ -773,7 +809,7 @@ def api_logout():
 def api_me():
     if not logged_in():
         return jsonify({'logged_in':False})
-    return jsonify({'logged_in':True,'user':{'id':session['user_id'],'username':session['username'],'role':session['role'],'full_name':session['full_name']}})
+    return jsonify({'logged_in':True,'user':{'id':session['user_id'],'username':session['username'],'role':session['role'],'full_name':session['full_name'],'doctor_id':session.get('doctor_id')}})
 
 # ── User management ───────────────────────────────────────────────────────────
 
@@ -790,8 +826,8 @@ def api_users():
         existing = query("SELECT id FROM users WHERE username=? OR email=?",(d['username'],d['email']),one=True)
         if existing:
             return jsonify({'error':'Username or email already exists'}), 409
-        nid = execute("INSERT INTO users (username,email,password,role,full_name) VALUES (?,?,?,?,?)",
-            (d['username'],d['email'],hash_pw(d['password']),d.get('role','staff'),d.get('full_name','')))
+        nid = execute("INSERT INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
+            (d['username'],d['email'],hash_pw(d['password']),d.get('role','staff'),d.get('full_name',''),d.get('doctor_id')))
         return jsonify({'message':'User created','id':nid}), 201
     return jsonify(query("SELECT id,username,email,role,full_name,created_at FROM users ORDER BY id"))
 
@@ -810,9 +846,10 @@ def api_user(uid):
         return jsonify({'message':'User deleted'})
     d = request.json or {}
     new_pw = hash_pw(d['password']) if d.get('password') else row['password']
-    execute("UPDATE users SET username=?,email=?,role=?,full_name=?,password=? WHERE id=?",
+    execute("UPDATE users SET username=?,email=?,role=?,full_name=?,password=?,doctor_id=? WHERE id=?",
         (d.get('username',row['username']),d.get('email',row['email']),
-         d.get('role',row['role']),d.get('full_name',row['full_name']),new_pw,uid))
+         d.get('role',row['role']),d.get('full_name',row['full_name']),new_pw,
+         d.get('doctor_id',row.get('doctor_id')),uid))
     return jsonify({'message':'User updated'})
 
 # ── Core API ──────────────────────────────────────────────────────────────────
@@ -829,11 +866,82 @@ def api_doctors():
         d = request.json or {}
         nid = execute("INSERT INTO doctors (name,specialization,department,experience,contact,email,qualification) VALUES (?,?,?,?,?,?,?)",
             (d.get('name',''),d.get('specialization',''),d.get('department',''),d.get('experience',0),d.get('contact'),d.get('email'),d.get('qualification')))
-        return jsonify({'message':'Doctor added','id':nid}), 201
+        # Auto-create a login account for the doctor
+        creds = create_doctor_user(nid, d.get('name',''), d.get('email'))
+        resp = {'message':'Doctor added','id':nid}
+        if creds:
+            resp['login_credentials'] = creds
+        return jsonify(resp), 201
     dept = request.args.get('department','')
+    # Non-admins (including public/patients) only see available doctors
+    is_admin = logged_in() and session.get('role') == 'admin'
+    avail_filter = '' if is_admin else ' AND available=1'
     if dept:
-        return jsonify(query("SELECT * FROM doctors WHERE department=? ORDER BY name",(dept,)))
-    return jsonify(query("SELECT * FROM doctors ORDER BY department,name"))
+        return jsonify(query(f"SELECT * FROM doctors WHERE department=?{avail_filter} ORDER BY name",(dept,)))
+    return jsonify(query(f"SELECT * FROM doctors WHERE 1=1{avail_filter} ORDER BY department,name"))
+
+@app.route('/api/doctors/credentials')
+def api_doctor_credentials():
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error':'Admin only'}), 403
+    rows = query("""SELECT u.username, u.email, u.role, u.full_name, u.doctor_id,
+                    d.specialization, d.department
+                    FROM users u JOIN doctors d ON d.id=u.doctor_id
+                    WHERE u.role='doctor' ORDER BY u.full_name""")
+    return jsonify(rows)
+
+@app.route('/api/doctors/<int:did>/reset-password', methods=['POST'])
+def api_doctor_reset_password(did):
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error':'Admin only'}), 403
+    doc = query("SELECT * FROM doctors WHERE id=?",(did,),one=True)
+    if not doc: return jsonify({'error':'Not found'}), 404
+    user = query("SELECT * FROM users WHERE doctor_id=?",(did,),one=True)
+    if not user: return jsonify({'error':'No login account found for this doctor'}), 404
+    _, password = generate_doctor_credentials(doc['name'], did)
+    execute("UPDATE users SET password=? WHERE doctor_id=?",(hash_pw(password),did))
+    return jsonify({'message':'Password reset','username':user['username'],'new_password':password})
+
+@app.route('/api/doctors/<int:did>/availability', methods=['PUT'])
+def api_doctor_availability(did):
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    row = query("SELECT * FROM doctors WHERE id=?", (did,), one=True)
+    if not row: return jsonify({'error': 'Not found'}), 404
+    d = request.json or {}
+    avail = 1 if d.get('available') else 0
+    execute("UPDATE doctors SET available=? WHERE id=?", (avail, did))
+    return jsonify({'message': 'Doctor visibility updated', 'available': avail})
+
+@app.route('/api/doctors/<int:did>/update-user', methods=['POST'])
+def api_doctor_update_user(did):
+    """Update the auto-created doctor user account with admin-chosen credentials."""
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    doc = query("SELECT * FROM doctors WHERE id=?", (did,), one=True)
+    if not doc: return jsonify({'error': 'Doctor not found'}), 404
+    user = query("SELECT * FROM users WHERE doctor_id=?", (did,), one=True)
+    if not user: return jsonify({'error': 'No user account found for this doctor'}), 404
+    d = request.json or {}
+    new_username = d.get('username', '').strip()
+    new_email    = d.get('email', '').strip()
+    new_password = d.get('password', '').strip()
+    new_fullname = d.get('full_name', doc['name']).strip()
+    if not new_username or not new_email or not new_password:
+        return jsonify({'error': 'username, email and password required'}), 400
+    conflict = query("SELECT id FROM users WHERE (username=? OR email=?) AND id!=?", (new_username, new_email, user['id']), one=True)
+    if conflict: return jsonify({'error': 'Username or email already taken'}), 409
+    execute("UPDATE users SET username=?, email=?, password=?, full_name=? WHERE id=?",
+        (new_username, new_email, hash_pw(new_password), new_fullname, user['id']))
+    return jsonify({'message': 'Doctor user account updated', 'username': new_username})
 
 @app.route('/api/doctors/<int:did>', methods=['GET','PUT','DELETE'])
 def api_doctor(did):
@@ -865,6 +973,23 @@ def api_patients():
              d.get('email'),d.get('address'),d.get('emergency_contact')))
         return jsonify({'message':'Patient added','id':nid}), 201
     s = request.args.get('search','')
+    # If logged in as a doctor, only show patients with appointments for that doctor
+    if logged_in() and session.get('role') == 'doctor' and session.get('doctor_id'):
+        did = session['doctor_id']
+        if s:
+            return jsonify(query(
+                """SELECT DISTINCT p.* FROM patients p
+                   JOIN appointments a ON a.patient_id=p.id
+                   WHERE a.doctor_id=? AND ((p.first_name||' '||p.last_name) LIKE ? OR p.contact LIKE ?)
+                   ORDER BY p.id DESC""",
+                (did, f'%{s}%', f'%{s}%')
+            ))
+        return jsonify(query(
+            """SELECT DISTINCT p.* FROM patients p
+               JOIN appointments a ON a.patient_id=p.id
+               WHERE a.doctor_id=? ORDER BY p.id DESC""",
+            (did,)
+        ))
     if s:
         return jsonify(query("SELECT * FROM patients WHERE (first_name||' '||last_name) LIKE ? OR contact LIKE ? ORDER BY id DESC",(f'%{s}%',f'%{s}%')))
     return jsonify(query("SELECT * FROM patients ORDER BY id DESC"))
@@ -904,9 +1029,45 @@ def api_appointments():
              FROM appointments a
              JOIN patients p ON p.id=a.patient_id
              JOIN doctors  d ON d.id=a.doctor_id"""
+    # If logged in as a doctor, restrict to their own appointments
+    doctor_filter = None
+    if logged_in() and session.get('role') == 'doctor' and session.get('doctor_id'):
+        doctor_filter = session['doctor_id']
+
+    if doctor_filter:
+        where = " WHERE a.doctor_id=?"
+        if sf:
+            where += " AND a.status=?"
+            return jsonify(query(sql+where+" ORDER BY a.id DESC",(doctor_filter,sf)))
+        return jsonify(query(sql+where+" ORDER BY a.id DESC",(doctor_filter,)))
     if sf:
         return jsonify(query(sql+" WHERE a.status=? ORDER BY a.id DESC",(sf,)))
     return jsonify(query(sql+" ORDER BY a.id DESC"))
+
+@app.route('/api/appointments/available-slots')
+def api_available_slots():
+    """Return time slots for a doctor on a given date, excluding confirmed ones."""
+    doctor_id = request.args.get('doctor_id', type=int)
+    date_str  = request.args.get('date', '')
+    if not doctor_id or not date_str:
+        return jsonify({'error': 'doctor_id and date required'}), 400
+
+    # All 30-min slots from 09:00 to 17:30
+    all_slots = []
+    for h in range(9, 18):
+        for m in (0, 30):
+            if h == 17 and m == 30: break
+            all_slots.append(f"{h:02d}:{m:02d}")
+
+    # Slots already confirmed for this doctor on this date
+    booked = query(
+        "SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status='Confirmed'",
+        (doctor_id, date_str)
+    )
+    booked_times = {r['appointment_time'] for r in booked}
+
+    slots = [{'time': s, 'available': s not in booked_times} for s in all_slots]
+    return jsonify(slots)
 
 @app.route('/api/appointments/<int:aid>', methods=['GET','PUT','DELETE'])
 def api_appointment(aid):
@@ -1376,51 +1537,66 @@ def api_email_test():
         return jsonify({'error': 'Valid email required'}), 400
     username, password, enabled = get_mail_settings()
 
-    # Pre-flight checks
+    # Detailed pre-flight checks
     if not enabled:
         return jsonify({'error': 'STEP 1 FAILED: Email notifications are disabled. Toggle the switch ON first.'}), 400
     if not username:
-        return jsonify({'error': 'STEP 2 FAILED: No sender email entered. Enter your verified SendGrid sender email and Save.'}), 400
+        return jsonify({'error': 'STEP 2 FAILED: No Gmail address entered. Enter your Gmail and Save.'}), 400
     if not password:
-        return jsonify({'error': 'STEP 3 FAILED: No SendGrid API Key saved. Enter your API key and Save.'}), 400
-    if not SENDGRID_AVAILABLE:
-        return jsonify({'error': 'SendGrid package not installed. Contact support.'}), 500
+        return jsonify({'error': 'STEP 3 FAILED: No App Password saved. Enter your 16-letter App Password and Save.'}), 400
+    if '@gmail.com' not in username and '@googlemail.com' not in username:
+        return jsonify({'error': f'WARNING: {username} may not be a Gmail address. Only Gmail SMTP is supported.'}), 400
 
     try:
-        sg = SendGridAPIClient(api_key=password)
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'✅ MediCare Plus — Email Test Successful'
+        msg['From']    = f'{HOSPITAL_NAME} <{username}>'
+        msg['To']      = to
         html_body = build_confirmation_email(
             'Test Patient', 'Dr. Sample Doctor', 'Cardiology',
             date.today().strftime('%Y-%m-%d'), '10:00 AM',
             'This is a test email to verify your settings work.', 0)
-        message = Mail(
-            from_email=(username, HOSPITAL_NAME),
-            to_emails=to,
-            subject=f'✅ MediCare Plus — Email Test Successful',
-            html_content=html_body
-        )
-        response = sg.send(message)
-        if response.status_code in (200, 202):
-            return jsonify({
-                'message': f'✅ Email sent to {to}! Check your inbox (and spam/junk folder).',
-                'from': username,
-                'to': to
-            })
-        else:
-            return jsonify({'error': f'SendGrid returned status {response.status_code}'}), 400
+        msg.attach(MIMEText(html_body, 'html'))
+
+        print(f"📧 Attempting SMTP connection to {MAIL_HOST}:{MAIL_PORT}...")
+        with smtplib.SMTP(MAIL_HOST, MAIL_PORT, timeout=20) as server:
+            server.set_debuglevel(0)
+            server.ehlo()
+            print("📧 EHLO ok, starting TLS...")
+            server.starttls()
+            server.ehlo()
+            print(f"📧 TLS ok, logging in as {username}...")
+            server.login(username, password)
+            print(f"📧 Login ok, sending to {to}...")
+            server.sendmail(username, to, msg.as_string())
+            print(f"✅ Email delivered to {to}")
+
+        return jsonify({
+            'message': f'✅ Email sent to {to}! Check your inbox (and spam/junk folder).',
+            'from': username,
+            'to': to
+        })
+
+    except smtplib.SMTPAuthenticationError as e:
+        msg_detail = str(e)
+        if '534' in msg_detail or '535' in msg_detail:
+            return jsonify({'error': (
+                'Authentication failed (535). This means:\n'
+                '• You used your normal Gmail password — this does NOT work\n'
+                '• You need a Gmail APP PASSWORD (16 letters with spaces)\n\n'
+                'How to get one:\n'
+                '1. Go to myaccount.google.com/security\n'
+                '2. Enable 2-Step Verification\n'
+                '3. Search "App passwords" → Generate → Mail → Copy 16 letters\n'
+                '4. Paste it in the App Password field above'
+            )}), 400
+        return jsonify({'error': f'Authentication error: {msg_detail}'}), 400
+    except smtplib.SMTPConnectError as e:
+        return jsonify({'error': f'Cannot connect to Gmail SMTP. Check your internet connection. ({e})'}), 400
+    except smtplib.SMTPRecipientsRefused as e:
+        return jsonify({'error': f'Recipient email refused: {to}. Check the address is valid.'}), 400
     except Exception as e:
-        err_str = str(e)
-        if '401' in err_str or 'Unauthorized' in err_str:
-            return jsonify({'error': (
-                'Invalid SendGrid API Key (401 Unauthorized).\n'
-                'Make sure you copied the full API key from SendGrid dashboard.'
-            )}), 400
-        if '403' in err_str or 'Forbidden' in err_str:
-            return jsonify({'error': (
-                'Sender not verified (403 Forbidden).\n'
-                'You must verify your sender email in SendGrid:\n'
-                'SendGrid dashboard → Settings → Sender Authentication → Verify a Single Sender'
-            )}), 400
-        return jsonify({'error': f'Error: {type(e).__name__}: {err_str}'}), 500
+        return jsonify({'error': f'Error: {type(e).__name__}: {str(e)}'}), 500
 
 # ── App init — runs for both  `python app.py`  and  gunicorn  ─────────────────
 def _init():
