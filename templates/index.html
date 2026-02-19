@@ -4638,11 +4638,22 @@
     let allDoctors = [];
     let allDepts = [];
 
+    let doctorLoginIds = new Set(); // set of doctor_ids that have logins
+
     async function loadDoctorsPage() {
         try {
-            const [dR, docR] = await Promise.all([fetch('/api/departments'), fetch('/api/doctors')]);
-            allDepts   = await dR.json();
-            allDoctors = await docR.json();
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            const fetches = [fetch('/api/departments'), fetch('/api/doctors')];
+            if (isAdmin) fetches.push(fetch('/api/doctors/credentials'));
+            const results = await Promise.all(fetches);
+            allDepts   = await results[0].json();
+            allDoctors = await results[1].json();
+            if (isAdmin && results[2]) {
+                const creds = await results[2].json();
+                doctorLoginIds = new Set(creds.map(c => c.doctor_id));
+            } else {
+                doctorLoginIds = new Set();
+            }
 
             // Populate department filter
             const sel = document.getElementById('doctorDeptFilter');
@@ -4711,12 +4722,15 @@
             const hiddenBadge = isAdmin && isHidden
                 ? `<div style="background:#FFB800;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;align-self:flex-start;margin-bottom:6px;">🔒 Hidden from patients</div>`
                 : '';
+            const hasLogin = doctorLoginIds.has(doc.id);
             const adminBtns = isAdmin ? `
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12px;" onclick="openEditDoctorModal(${doc.id})">✏️ Edit</button>
-                    <button class="btn" style="flex:1;padding:7px;font-size:12px;background:${isHidden?'#dcfce7;color:#16a34a;border:1px solid #bbf7d0':'#FEF3C7;color:#B45309;border:1px solid #FDE68A'};" onclick="toggleDoctorVisibility(${doc.id}, ${isHidden?1:0})">${isHidden ? '👁️ Show' : '🙈 Hide'}</button>
-                    <button class="btn" style="flex:1;padding:7px;font-size:12px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="deleteDoctor(${doc.id},'${doc.name.replace(/'/g,"\\'")}')">🗑️</button>
-                </div>` : '';
+                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                    <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12px;min-width:60px;" onclick="openEditDoctorModal(${doc.id})">✏️ Edit</button>
+                    <button class="btn" style="flex:1;padding:7px;font-size:12px;min-width:60px;background:${isHidden?'#dcfce7;color:#16a34a;border:1px solid #bbf7d0':'#FEF3C7;color:#B45309;border:1px solid #FDE68A'};" onclick="toggleDoctorVisibility(${doc.id}, ${isHidden?1:0})">${isHidden ? '👁️ Show' : '🙈 Hide'}</button>
+                    <button class="btn" style="flex:1;padding:7px;font-size:12px;min-width:60px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="deleteDoctor(${doc.id},'${doc.name.replace(/'/g,"\\'")}')">🗑️</button>
+                </div>
+                ${!hasLogin ? `<button class="btn" style="width:100%;margin-top:6px;padding:7px;font-size:12px;background:#f0f9ff;color:#0066FF;border:1px solid #bae6fd;" onclick="createDoctorLogin(${doc.id},'${doc.name.replace(/'/g,"\\'")}')">🔐 Create Login</button>` : '<div style="margin-top:6px;font-size:11px;color:#00C853;text-align:center;">✅ Login exists</div>'}
+                ` : '';
             const bookBtn = isHidden && !isAdmin ? '' :
                 `<button class="btn btn-primary" style="margin-top:14px;width:100%;padding:9px;" onclick="bookWithDoctor('${doc.department.replace(/'/g,"\\'")}', ${doc.id})">📅 Book Appointment</button>`;
             return `<div class="feature-card" style="${cardStyle}">
@@ -4901,14 +4915,29 @@
 
     async function deleteDoctor(docId, docName) {
         if (!currentUser || currentUser.role !== 'admin') { showToast('❌ Admin access required', 'error'); return; }
-        if (!confirm(`Delete Dr. ${docName}? This cannot be undone.`)) return;
+        if (!confirm(`Delete ${docName}? This will also remove their login account. This cannot be undone.`)) return;
         try {
             const r = await fetch(`/api/doctors/${docId}`, { method:'DELETE' });
             const d = await r.json();
             if (!r.ok) { showToast('❌ ' + (d.error||'Delete failed'), 'error'); return; }
             showToast(`✅ ${docName} removed.`, 'success');
             await loadDoctorsPage();
-        } catch(e) { showToast('❌ Network error', 'error'); }
+        } catch(e) { showToast('❌ Network error: ' + e.message, 'error'); }
+    }
+
+    async function createDoctorLogin(docId, docName) {
+        if (!currentUser || currentUser.role !== 'admin') return;
+        try {
+            const r = await fetch(`/api/doctors/${docId}/create-login`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({})  // auto-generate credentials
+            });
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Failed'), 'error'); return; }
+            await loadDoctorsPage();
+            showDoctorCredentials(docName, { username: d.username, password: d.password, email: d.email });
+        } catch(e) { showToast('❌ Network error: ' + e.message, 'error'); }
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────

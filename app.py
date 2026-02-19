@@ -958,8 +958,47 @@ def api_doctor(did):
              d.get('contact',row['contact']),d.get('email',row['email']),
              d.get('qualification',row['qualification']),did))
         return jsonify({'message':'Doctor updated'})
+    # DELETE — remove linked user account first to avoid foreign key conflict
+    try:
+        execute("DELETE FROM users WHERE doctor_id=?", (did,))
+    except Exception:
+        pass
     execute("DELETE FROM doctors WHERE id=?", (did,))
     return jsonify({'message':'Doctor deleted'})
+
+@app.route('/api/doctors/<int:did>/create-login', methods=['POST'])
+def api_doctor_create_login(did):
+    """Create a login for an existing doctor who has no user account yet."""
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    doc = query("SELECT * FROM doctors WHERE id=?", (did,), one=True)
+    if not doc: return jsonify({'error': 'Doctor not found'}), 404
+    # Check if already has a login
+    existing = query("SELECT id, username FROM users WHERE doctor_id=?", (did,), one=True)
+    if existing:
+        return jsonify({'error': f'Doctor already has a login: {existing["username"]}'}), 409
+    d = request.json or {}
+    # Use provided credentials or auto-generate
+    if d.get('username') and d.get('password'):
+        username = d['username'].strip()
+        password = d['password'].strip()
+        email = d.get('email', '').strip() or f"{username}@medicare.com"
+        # Check uniqueness
+        conflict = query("SELECT id FROM users WHERE username=? OR email=?", (username, email), one=True)
+        if conflict: return jsonify({'error': 'Username or email already taken'}), 409
+        execute("INSERT INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
+            (username, email, hash_pw(password), 'doctor', doc['name'], did))
+    else:
+        # Auto-generate
+        creds = create_doctor_user(did, doc['name'], doc.get('email'))
+        if not creds:
+            return jsonify({'error': 'Login already exists for this doctor'}), 409
+        username = creds['username']
+        password = creds['password']
+        email    = creds['email']
+    return jsonify({'message': 'Login created', 'username': username, 'password': password, 'email': email}), 201
 
 @app.route('/api/patients', methods=['GET','POST'])
 def api_patients():
@@ -1599,12 +1638,25 @@ def api_email_test():
         return jsonify({'error': f'Error: {type(e).__name__}: {str(e)}'}), 500
 
 # ── App init — runs for both  `python app.py`  and  gunicorn  ─────────────────
+def _migrate_doctor_users():
+    """One-time migration: create user accounts for any doctor that doesn't have one yet."""
+    doctors = query("SELECT id, name, email FROM doctors ORDER BY id")
+    created = 0
+    for doc in doctors:
+        result = create_doctor_user(doc['id'], doc['name'], doc.get('email'))
+        if result:
+            created += 1
+            print(f"  ✅ Created login for {doc['name']} → {result['username']} / {result['password']}")
+    if created:
+        print(f"  🎉 Auto-migration: created {created} doctor login accounts")
+
 def _init():
     db_dir = os.path.dirname(DB_PATH)
     if db_dir:
         os.makedirs(db_dir, exist_ok=True)   # ensure /data exists on Railway volume
     create_tables()
     seed_database()
+    _migrate_doctor_users()   # safe to run every startup — skips existing accounts
 
 _init()   # called at import time so gunicorn picks it up automatically
 
