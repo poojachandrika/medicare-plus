@@ -422,7 +422,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL, email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL, role TEXT DEFAULT 'staff',
+    password TEXT NOT NULL, plain_password TEXT,
+    role TEXT DEFAULT 'staff',
     full_name TEXT, doctor_id INTEGER REFERENCES doctors(id),
     created_at TEXT DEFAULT (datetime('now'))
 );
@@ -495,6 +496,23 @@ CREATE TABLE IF NOT EXISTS radiology_bookings (
     service_name TEXT NOT NULL, booking_date TEXT NOT NULL,
     booking_time TEXT NOT NULL, status TEXT DEFAULT 'Pending',
     notes TEXT, amount REAL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS admissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id INTEGER NOT NULL REFERENCES patients(id),
+    doctor_id  INTEGER REFERENCES doctors(id),
+    ward       TEXT NOT NULL,
+    room_no    TEXT,
+    bed_no     TEXT,
+    admit_date TEXT NOT NULL,
+    discharge_date TEXT,
+    diagnosis  TEXT,
+    treatment  TEXT,
+    amount     REAL DEFAULT 0,
+    status     TEXT DEFAULT 'Admitted',
+    notes      TEXT,
+    admitted_by INTEGER REFERENCES users(id),
     created_at TEXT DEFAULT (datetime('now'))
 );
 """
@@ -696,17 +714,15 @@ def generate_doctor_credentials(doctor_name, doctor_id):
 
 def create_doctor_user(doctor_id, doctor_name, doctor_email=None):
     """Create a user account for a doctor if one doesn't already exist."""
-    # Check if user already linked to this doctor
     existing = query("SELECT id FROM users WHERE doctor_id=?",(doctor_id,),one=True)
     if existing:
         return None
     username, password = generate_doctor_credentials(doctor_name, doctor_id)
     email = doctor_email or f"{username}@medicare.com"
-    # If email already exists, modify it
     if query("SELECT id FROM users WHERE email=?",(email,),one=True):
         email = f"{username}{doctor_id}@medicare.com"
-    uid = execute("INSERT OR IGNORE INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
-        (username, email, hash_pw(password), 'doctor', doctor_name, doctor_id))
+    uid = execute("INSERT OR IGNORE INTO users (username,email,password,plain_password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?,?)",
+        (username, email, hash_pw(password), password, 'doctor', doctor_name, doctor_id))
     return {'username': username, 'password': password, 'email': email}
 
 def create_tables():
@@ -726,6 +742,9 @@ def create_tables():
         if 'doctor_id' not in ucols:
             execute("ALTER TABLE users ADD COLUMN doctor_id INTEGER REFERENCES doctors(id)")
             print("✅ Migration: added 'doctor_id' column to users")
+        if 'plain_password' not in ucols:
+            execute("ALTER TABLE users ADD COLUMN plain_password TEXT")
+            print("✅ Migration: added 'plain_password' column to users")
     except Exception as e:
         print(f"Migration note: {e}")
 
@@ -752,8 +771,8 @@ def seed_database():
         ("doctor1","doctor@medicare.com","doctor123","doctor","Dr. House"),
         ("staff1","staff@medicare.com","staff123","staff","Nurse Joy"),
     ]:
-        execute("INSERT OR IGNORE INTO users (username,email,password,role,full_name) VALUES (?,?,?,?,?)",
-                (uname,email,hash_pw(pw),role,fname))
+        execute("INSERT OR IGNORE INTO users (username,email,password,plain_password,role,full_name) VALUES (?,?,?,?,?,?)",
+                (uname,email,hash_pw(pw),pw,role,fname))
     for slug,name,desc in DEPARTMENTS_SEED:
         execute("INSERT OR IGNORE INTO departments (slug,name,description) VALUES (?,?,?)",(slug,name,desc))
     for name,spec,dept,exp,qual in DOCTORS_SEED:
@@ -827,10 +846,11 @@ def api_users():
         existing = query("SELECT id FROM users WHERE username=? OR email=?",(d['username'],d['email']),one=True)
         if existing:
             return jsonify({'error':'Username or email already exists'}), 409
-        nid = execute("INSERT INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
-            (d['username'],d['email'],hash_pw(d['password']),d.get('role','staff'),d.get('full_name',''),d.get('doctor_id')))
+        plain = d['password']
+        nid = execute("INSERT INTO users (username,email,password,plain_password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?,?)",
+            (d['username'],d['email'],hash_pw(plain),plain,d.get('role','staff'),d.get('full_name',''),d.get('doctor_id')))
         return jsonify({'message':'User created','id':nid}), 201
-    return jsonify(query("SELECT id,username,email,role,full_name,created_at FROM users ORDER BY id"))
+    return jsonify(query("SELECT id,username,email,role,full_name,plain_password,created_at FROM users ORDER BY id"))
 
 @app.route('/api/users/<int:uid>', methods=['PUT','DELETE'])
 def api_user(uid):
@@ -855,9 +875,50 @@ def api_user(uid):
 
 # ── Core API ──────────────────────────────────────────────────────────────────
 
-@app.route('/api/departments')
+@app.route('/api/departments', methods=['GET','POST'])
 def api_departments():
-    return jsonify(query("SELECT id,slug,name,icon FROM departments ORDER BY name"))
+    if request.method == 'POST':
+        err = require_login()
+        if err: return err
+        if session.get('role') != 'admin':
+            return jsonify({'error':'Admin only'}), 403
+        d = request.json or {}
+        name = d.get('name','').strip()
+        slug = d.get('slug','').strip() or name.lower().replace(' ','_')
+        icon = d.get('icon','🏥').strip()
+        desc = d.get('description','').strip()
+        if not name:
+            return jsonify({'error':'Name is required'}), 400
+        existing = query("SELECT id FROM departments WHERE slug=? OR name=?",(slug,name),one=True)
+        if existing:
+            return jsonify({'error':'Department already exists'}), 409
+        nid = execute("INSERT INTO departments (slug,name,icon,description) VALUES (?,?,?,?)",(slug,name,icon,desc))
+        return jsonify({'message':'Department added','id':nid,'slug':slug,'name':name,'icon':icon,'description':desc}), 201
+    return jsonify(query("SELECT id,slug,name,icon,description FROM departments ORDER BY name"))
+
+@app.route('/api/departments/<int:did>', methods=['PUT','DELETE'])
+def api_department(did):
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error':'Admin only'}), 403
+    row = query("SELECT * FROM departments WHERE id=?", (did,), one=True)
+    if not row: return jsonify({'error':'Not found'}), 404
+    if request.method == 'PUT':
+        d = request.json or {}
+        name = d.get('name', row['name']).strip()
+        icon = d.get('icon', row['icon'] or '🏥').strip()
+        desc = d.get('description', row['description'] or '').strip()
+        slug = d.get('slug', row['slug']).strip()
+        execute("UPDATE departments SET name=?,icon=?,description=?,slug=? WHERE id=?", (name,icon,desc,slug,did))
+        return jsonify({'message':'Department updated'})
+    # DELETE — check if any doctors are in this department
+    doctors_in_dept = query("SELECT COUNT(*) as c FROM doctors WHERE department=?", (row['name'],), one=True)['c']
+    if doctors_in_dept > 0:
+        return jsonify({'error': f'Cannot delete — {doctors_in_dept} doctor(s) are assigned to this department. Reassign them first.'}), 400
+    execute("DELETE FROM departments WHERE id=?", (did,))
+    return jsonify({'message':'Department deleted'})
+
 
 @app.route('/api/doctors', methods=['GET','POST'])
 def api_doctors():
@@ -888,48 +949,43 @@ def api_reset_db():
     if err: return err
     if session.get('role') != 'admin':
         return jsonify({'error': 'Admin only'}), 403
-
-    print("🔄 DB Reset triggered by admin...")
-
-    # Remove all doctors, their user accounts, appointments, patients
-    execute("DELETE FROM users WHERE role='doctor'")
-    execute("DELETE FROM users WHERE username IN ('doctor1','staff1')")
-    execute("DELETE FROM doctors")
-    execute("DELETE FROM appointments")
-    execute("DELETE FROM patients")
-
-    # Reset ID sequences so everything starts from 1
-    for tbl in ['doctors','users','appointments','patients']:
-        try: execute(f"DELETE FROM sqlite_sequence WHERE name='{tbl}'")
-        except: pass
-
-    # Keep admin account intact
-    admin_user  = os.environ.get('ADMIN_USERNAME', 'admin')
-    admin_email = os.environ.get('ADMIN_EMAIL',    'admin@medicare.com')
-    admin_pw    = os.environ.get('ADMIN_PASSWORD',  'admin123')
-    execute("INSERT OR IGNORE INTO users (username,email,password,role,full_name) VALUES (?,?,?,?,?)",
-        (admin_user, admin_email, hash_pw(admin_pw), 'admin', 'System Admin'))
-
-    # Reseed all 37 doctors cleanly
-    doctor_creds = []
-    for name, spec, dept, exp, qual in DOCTORS_SEED:
-        did = execute("INSERT INTO doctors (name,specialization,department,experience,qualification) VALUES (?,?,?,?,?)",
-            (name, spec, dept, exp, qual))
-        creds = create_doctor_user(did, name)
-        if creds:
-            doctor_creds.append({'id': did, 'name': name, 'username': creds['username'], 'password': creds['password']})
-            print(f"  ✅ {name} → {creds['username']} / {creds['password']}")
-
-    # Reseed sample patients
-    for fn,ln,dob,gender,bg,contact,email in PATIENTS_SEED:
-        execute("INSERT INTO patients (first_name,last_name,date_of_birth,gender,blood_group,contact,email) VALUES (?,?,?,?,?,?,?)",
-            (fn,ln,dob,gender,bg,contact,email))
-
-    print(f"✅ Reset complete. {len(doctor_creds)} doctors reseeded.")
-    return jsonify({
-        'message': f'✅ Reset complete! {len(doctor_creds)} doctors reseeded.',
-        'doctors': doctor_creds
-    })
+    try:
+        print("🔄 DB Reset triggered by admin...")
+        # Order matters — delete child tables first
+        execute("DELETE FROM appointments")
+        execute("DELETE FROM patients")
+        execute("DELETE FROM users WHERE role='doctor'")
+        execute("DELETE FROM users WHERE username IN ('doctor1','staff1')")
+        execute("DELETE FROM doctors")
+        # Reset sequences safely
+        for tbl in ['doctors','users','appointments','patients']:
+            try: execute(f"UPDATE sqlite_sequence SET seq=0 WHERE name='{tbl}'")
+            except: pass
+        # Ensure admin exists
+        admin_user  = os.environ.get('ADMIN_USERNAME', 'admin')
+        admin_email = os.environ.get('ADMIN_EMAIL',    'admin@medicare.com')
+        admin_pw    = os.environ.get('ADMIN_PASSWORD',  'admin123')
+        execute("INSERT OR IGNORE INTO users (username,email,password,plain_password,role,full_name) VALUES (?,?,?,?,?,?)",
+            (admin_user, admin_email, hash_pw(admin_pw), admin_pw, 'admin', 'System Admin'))
+        # Reseed all 37 doctors
+        doctor_creds = []
+        for name, spec, dept, exp, qual in DOCTORS_SEED:
+            did = execute("INSERT INTO doctors (name,specialization,department,experience,qualification) VALUES (?,?,?,?,?)",
+                (name, spec, dept, exp, qual))
+            creds = create_doctor_user(did, name)
+            if creds:
+                doctor_creds.append({'id': did, 'name': name, 'username': creds['username'], 'password': creds['password']})
+                print(f"  ✅ {name} → {creds['username']} / {creds['password']}")
+        # Reseed sample patients
+        for fn,ln,dob,gender,bg,contact,email in PATIENTS_SEED:
+            execute("INSERT INTO patients (first_name,last_name,date_of_birth,gender,blood_group,contact,email) VALUES (?,?,?,?,?,?,?)",
+                (fn,ln,dob,gender,bg,contact,email))
+        print(f"✅ Reset complete. {len(doctor_creds)} doctors reseeded.")
+        return jsonify({'message': f'Reset complete! {len(doctor_creds)} doctors reseeded.', 'doctors': doctor_creds})
+    except Exception as e:
+        print(f"❌ Reset error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/doctors/credentials')
 def api_doctor_credentials():
@@ -954,7 +1010,7 @@ def api_doctor_reset_password(did):
     user = query("SELECT * FROM users WHERE doctor_id=?",(did,),one=True)
     if not user: return jsonify({'error':'No login account found for this doctor'}), 404
     _, password = generate_doctor_credentials(doc['name'], did)
-    execute("UPDATE users SET password=? WHERE doctor_id=?",(hash_pw(password),did))
+    execute("UPDATE users SET password=?,plain_password=? WHERE doctor_id=?",(hash_pw(password),password,did))
     return jsonify({'message':'Password reset','username':user['username'],'new_password':password})
 
 @app.route('/api/doctors/<int:did>/availability', methods=['PUT'])
@@ -1039,8 +1095,8 @@ def api_doctor_create_login(did):
         # Check uniqueness
         conflict = query("SELECT id FROM users WHERE username=? OR email=?", (username, email), one=True)
         if conflict: return jsonify({'error': 'Username or email already taken'}), 409
-        execute("INSERT INTO users (username,email,password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?)",
-            (username, email, hash_pw(password), 'doctor', doc['name'], did))
+        execute("INSERT INTO users (username,email,password,plain_password,role,full_name,doctor_id) VALUES (?,?,?,?,?,?,?)",
+            (username, email, hash_pw(password), password, 'doctor', doc['name'], did))
     else:
         # Auto-generate
         creds = create_doctor_user(did, doc['name'], doc.get('email'))
@@ -1216,6 +1272,20 @@ def api_appointment(aid):
 @app.route('/api/dashboard/stats')
 def api_stats():
     today = date.today().strftime('%Y-%m-%d')
+    if logged_in() and session.get('role') == 'doctor' and session.get('doctor_id'):
+        did = session['doctor_id']
+        return jsonify({
+            'total_patients':     query("SELECT COUNT(DISTINCT patient_id) as c FROM appointments WHERE doctor_id=?",(did,),one=True)['c'],
+            'total_doctors':      query("SELECT COUNT(*) as c FROM doctors",one=True)['c'],
+            'today_appointments': query("SELECT COUNT(*) as c FROM appointments WHERE appointment_date=? AND doctor_id=?",(today,did),one=True)['c'],
+            'pending':            query("SELECT COUNT(*) as c FROM appointments WHERE status='Pending' AND doctor_id=?",(did,),one=True)['c'],
+            'confirmed':          query("SELECT COUNT(*) as c FROM appointments WHERE status='Confirmed' AND doctor_id=?",(did,),one=True)['c'],
+            'completed':          query("SELECT COUNT(*) as c FROM appointments WHERE status='Completed' AND doctor_id=?",(did,),one=True)['c'],
+            'cancelled':          query("SELECT COUNT(*) as c FROM appointments WHERE status='Cancelled' AND doctor_id=?",(did,),one=True)['c'],
+            'no_show':            query("SELECT COUNT(*) as c FROM appointments WHERE status='No-Show' AND doctor_id=?",(did,),one=True)['c'],
+            'total_appointments': query("SELECT COUNT(*) as c FROM appointments WHERE doctor_id=?",(did,),one=True)['c'],
+            'total_departments':  query("SELECT COUNT(*) as c FROM departments",one=True)['c'],
+        })
     return jsonify({
         'total_patients':     query("SELECT COUNT(*) as c FROM patients",one=True)['c'],
         'total_doctors':      query("SELECT COUNT(*) as c FROM doctors",one=True)['c'],
@@ -1226,7 +1296,79 @@ def api_stats():
         'cancelled':          query("SELECT COUNT(*) as c FROM appointments WHERE status='Cancelled'",one=True)['c'],
         'no_show':            query("SELECT COUNT(*) as c FROM appointments WHERE status='No-Show'",one=True)['c'],
         'total_appointments': query("SELECT COUNT(*) as c FROM appointments",one=True)['c'],
+        'total_departments':  query("SELECT COUNT(*) as c FROM departments",one=True)['c'],
     })
+
+# ── Admissions ────────────────────────────────────────────────────────────────
+
+@app.route('/api/admissions', methods=['GET','POST'])
+def api_admissions():
+    err = require_login()
+    if err: return err
+    if request.method == 'POST':
+        d = request.json or {}
+        if not d.get('patient_id') or not d.get('ward') or not d.get('admit_date'):
+            return jsonify({'error': 'patient_id, ward and admit_date are required'}), 400
+        nid = execute("""INSERT INTO admissions
+            (patient_id,doctor_id,ward,room_no,bed_no,admit_date,discharge_date,
+             diagnosis,treatment,amount,status,notes,admitted_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (d['patient_id'], d.get('doctor_id'), d['ward'],
+             d.get('room_no',''), d.get('bed_no',''), d['admit_date'],
+             d.get('discharge_date'), d.get('diagnosis',''), d.get('treatment',''),
+             d.get('amount',0), d.get('status','Admitted'), d.get('notes',''),
+             session.get('user_id')))
+        return jsonify({'message':'Patient admitted','id':nid}), 201
+
+    rows = query("""SELECT a.*, p.first_name||' '||p.last_name AS patient_name,
+        p.contact AS patient_contact, p.blood_group,
+        d.name AS doctor_name, d.department,
+        u.full_name AS admitted_by_name
+        FROM admissions a
+        JOIN patients p ON p.id=a.patient_id
+        LEFT JOIN doctors d ON d.id=a.doctor_id
+        LEFT JOIN users u ON u.id=a.admitted_by
+        ORDER BY a.id DESC""")
+    return jsonify(rows)
+
+@app.route('/api/admissions/<int:aid>', methods=['GET','PUT','DELETE'])
+def api_admission(aid):
+    err = require_login()
+    if err: return err
+    row = query("SELECT * FROM admissions WHERE id=?", (aid,), one=True)
+    if not row: return jsonify({'error':'Not found'}), 404
+    if request.method == 'GET': return jsonify(row)
+    if request.method == 'DELETE':
+        execute("DELETE FROM admissions WHERE id=?", (aid,))
+        return jsonify({'message':'Admission record deleted'})
+    d = request.json or {}
+    execute("""UPDATE admissions SET ward=?,room_no=?,bed_no=?,admit_date=?,
+        discharge_date=?,diagnosis=?,treatment=?,amount=?,status=?,notes=?,doctor_id=?
+        WHERE id=?""",
+        (d.get('ward', row['ward']),
+         d.get('room_no', row['room_no']),
+         d.get('bed_no', row['bed_no']),
+         d.get('admit_date', row['admit_date']),
+         d.get('discharge_date', row['discharge_date']),
+         d.get('diagnosis', row['diagnosis']),
+         d.get('treatment', row['treatment']),
+         d.get('amount', row['amount']),
+         d.get('status', row['status']),
+         d.get('notes', row['notes']),
+         d.get('doctor_id', row['doctor_id']),
+         aid))
+    return jsonify({'message':'Admission updated'})
+
+@app.route('/api/patients/<int:pid>/admissions')
+def api_patient_admissions(pid):
+    err = require_login()
+    if err: return err
+    rows = query("""SELECT a.*, d.name AS doctor_name, u.full_name AS admitted_by_name
+        FROM admissions a
+        LEFT JOIN doctors d ON d.id=a.doctor_id
+        LEFT JOIN users u ON u.id=a.admitted_by
+        WHERE a.patient_id=? ORDER BY a.admit_date DESC""", (pid,))
+    return jsonify(rows)
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 
@@ -1330,6 +1472,26 @@ def report_financial():
             'status': r['status'],
             'amount': r['amount'],
             'note': ''
+        })
+
+    # Admissions billing
+    adm_rows = query("""SELECT a.*, p.first_name||' '||p.last_name AS patient_name,
+        d.name AS doctor_name, d.department
+        FROM admissions a
+        JOIN patients p ON p.id=a.patient_id
+        LEFT JOIN doctors d ON d.id=a.doctor_id
+        ORDER BY a.admit_date DESC""")
+    for r in adm_rows:
+        records.append({
+            'id': f"ADM-{r['id']}",
+            'type': 'Admission',
+            'patient_name': r['patient_name'],
+            'service_name': f"Admission — {r['ward']}" + (f" · {r['room_no']}" if r['room_no'] else ''),
+            'department': r['department'] or 'Inpatient',
+            'date': r['admit_date'],
+            'status': r['status'],
+            'amount': r['amount'] or 0,
+            'note': r['diagnosis'] or ''
         })
 
     # Sort all records by date descending

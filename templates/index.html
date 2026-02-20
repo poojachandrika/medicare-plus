@@ -1345,64 +1345,7 @@
             <nav>
                 <ul class="main-nav">
                     <li><a href="#" class="nav-link active" onclick="showPage('home')">Home</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="nav-link">Departments ▾</a>
-                        <div class="dropdown-menu" style="min-width:280px;">
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('cardiology'); return false;">
-                                <div class="dropdown-icon">🩺</div>
-                                <div><div style="font-weight: 600;">Cardiology</div><div style="font-size: 12px; color: #6B7280;">Heart Care</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('neurology'); return false;">
-                                <div class="dropdown-icon">🧠</div>
-                                <div><div style="font-weight: 600;">Neurology</div><div style="font-size: 12px; color: #6B7280;">Brain & Nervous System</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('orthopedics'); return false;">
-                                <div class="dropdown-icon">🦴</div>
-                                <div><div style="font-weight: 600;">Orthopedics</div><div style="font-size: 12px; color: #6B7280;">Bone & Joint Care</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('pediatrics'); return false;">
-                                <div class="dropdown-icon">👶</div>
-                                <div><div style="font-weight: 600;">Pediatrics</div><div style="font-size: 12px; color: #6B7280;">Child Healthcare</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('pulmonology'); return false;">
-                                <div class="dropdown-icon">🫁</div>
-                                <div><div style="font-weight: 600;">Pulmonology</div><div style="font-size: 12px; color: #6B7280;">Respiratory Care</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('hematology'); return false;">
-                                <div class="dropdown-icon">🩸</div>
-                                <div><div style="font-weight: 600;">Hematology</div><div style="font-size: 12px; color: #6B7280;">Blood Disorders</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('oncology'); return false;">
-                                <div class="dropdown-icon">🎗️</div>
-                                <div><div style="font-weight: 600;">Oncology</div><div style="font-size: 12px; color: #6B7280;">Cancer Care</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('gynecology'); return false;">
-                                <div class="dropdown-icon">🌸</div>
-                                <div><div style="font-weight: 600;">Gynecology</div><div style="font-size: 12px; color: #6B7280;">Women's Health</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('dermatology'); return false;">
-                                <div class="dropdown-icon">🩹</div>
-                                <div><div style="font-weight: 600;">Dermatology</div><div style="font-size: 12px; color: #6B7280;">Skin Care</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('psychiatry'); return false;">
-                                <div class="dropdown-icon">🧩</div>
-                                <div><div style="font-weight: 600;">Psychiatry</div><div style="font-size: 12px; color: #6B7280;">Mental Health</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('ent'); return false;">
-                                <div class="dropdown-icon">👂</div>
-                                <div><div style="font-weight: 600;">ENT</div><div style="font-size: 12px; color: #6B7280;">Ear, Nose & Throat</div></div>
-                            </a>
-                            <a href="#" class="dropdown-item" onclick="navigateToDepartment('urology'); return false;">
-                                <div class="dropdown-icon">🫘</div>
-                                <div><div style="font-weight: 600;">Urology</div><div style="font-size: 12px; color: #6B7280;">Urinary & Renal Care</div></div>
-                            </a>
-                            <div style="border-top:1px solid #E5E7EB;margin:8px 0;"></div>
-                            <a href="#" class="dropdown-item" onclick="showPage('departments'); return false;" style="color:var(--primary);font-weight:600;">
-                                <div class="dropdown-icon" style="background:linear-gradient(135deg,#E5E7EB,#d1d5db);color:#374151;">📋</div>
-                                <div>View All Departments</div>
-                            </a>
-                        </div>
-                    </li>
+                    <li><a href="#" class="nav-link" onclick="showPage('departments')">Departments</a></li>
                     <li><a href="#" class="nav-link" onclick="showPage('doctors')">Doctors</a></li>
                     <li id="navPatients" style="display:none;"><a href="#" class="nav-link" onclick="showPage('patients')">Patients</a></li>
                     <li id="navAppointments" style="display:none;"><a href="#" class="nav-link" onclick="showPage('appointments')">Appointments</a></li>
@@ -1678,14 +1621,14 @@
                     <div class="dashboard-card-label">Active Patients</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">🆕</div>
-                    <div class="dashboard-card-value" style="color: #FFB800;" id="patients-page-new">—</div>
-                    <div class="dashboard-card-label">New This Month</div>
+                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">⏳</div>
+                    <div class="dashboard-card-value" style="color: #FFB800;" id="patients-page-pending">—</div>
+                    <div class="dashboard-card-label">Pending</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">🏥</div>
-                    <div class="dashboard-card-value" style="color: #FF6B6B;" id="patients-page-appointments">—</div>
-                    <div class="dashboard-card-label">Total Appointments</div>
+                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">❌</div>
+                    <div class="dashboard-card-value" style="color: #FF6B6B;" id="patients-page-cancelled">—</div>
+                    <div class="dashboard-card-label">Cancelled</div>
                 </div>
             </div>
 
@@ -1695,7 +1638,7 @@
                     <div class="table-actions">
                         <div class="search-box">
                             <span>🔍</span>
-                            <input type="text" placeholder="Search patients...">
+                            <input type="text" id="patient-search-input" placeholder="Search by name, contact, email..." oninput="renderPatientsTable()">
                         </div>
                         <button class="btn btn-primary" onclick="openModal('patientModal')">+ Add Patient</button>
                     </div>
@@ -1709,14 +1652,15 @@
                             <th>Blood Group</th>
                             <th>Contact</th>
                             <th>Email</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px;">
-                                <div style="font-size: 48px; margin-bottom: 10px;">📋</div>
-                                <div style="color: var(--text-gray);">Loading patients...</div>
+                            <td colspan="8" style="text-align:center;padding:40px;">
+                                <div style="font-size:48px;margin-bottom:10px;">📋</div>
+                                <div style="color:var(--text-gray);">Loading patients...</div>
                             </td>
                         </tr>
                     </tbody>
@@ -1818,29 +1762,30 @@
     <div id="appointments" class="page">
         <div class="dashboard">
             <div class="dashboard-header">
-                <h1 class="dashboard-title">Appointment Management</h1>
+                <h1 class="dashboard-title" id="appt-page-title">Appointment Management</h1>
                 <div class="breadcrumb">Home / Appointments</div>
             </div>
 
+            <!-- Dynamic stat boxes -->
             <div class="dashboard-grid">
                 <div class="dashboard-card">
                     <div class="dashboard-card-icon">📅</div>
-                    <div class="dashboard-card-value">89</div>
-                    <div class="dashboard-card-label">Today's Appointments</div>
+                    <div class="dashboard-card-value" id="appt-stat-total">—</div>
+                    <div class="dashboard-card-label">Total Appointments</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #00C853, #00D9B5);">✅</div>
-                    <div class="dashboard-card-value" style="color: #00C853;">67</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#00C853,#00D9B5);">✅</div>
+                    <div class="dashboard-card-value" style="color:#00C853;" id="appt-stat-confirmed">—</div>
                     <div class="dashboard-card-label">Confirmed</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">⏳</div>
-                    <div class="dashboard-card-value" style="color: #FFB800;">15</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#FFB800,#FF9500);">⏳</div>
+                    <div class="dashboard-card-value" style="color:#FFB800;" id="appt-stat-pending">—</div>
                     <div class="dashboard-card-label">Pending</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">❌</div>
-                    <div class="dashboard-card-value" style="color: #FF6B6B;">7</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#FF6B6B,#FF5252);">❌</div>
+                    <div class="dashboard-card-value" style="color:#FF6B6B;" id="appt-stat-cancelled">—</div>
                     <div class="dashboard-card-label">Cancelled</div>
                 </div>
             </div>
@@ -1848,7 +1793,13 @@
             <div class="data-table-container">
                 <div class="table-header">
                     <div class="table-title">Appointment Schedule</div>
-                    <div class="table-actions">
+                    <div class="table-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <!-- Date filter (visible to all, especially doctors) -->
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <label style="font-size:13px;color:#6B7280;font-weight:600;">📆 Date:</label>
+                            <input type="date" id="appt-date-filter" class="form-input" style="padding:7px 12px;font-size:13px;width:160px;" onchange="renderAppointmentsTable()">
+                            <button class="btn btn-outline" style="padding:7px 12px;font-size:12px;" onclick="document.getElementById('appt-date-filter').value='';renderAppointmentsTable()">Clear</button>
+                        </div>
                         <button class="btn btn-primary" onclick="openModal('appointmentModal')">+ Book Appointment</button>
                     </div>
                 </div>
@@ -1868,9 +1819,9 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 40px;">
-                                <div style="font-size: 48px; margin-bottom: 10px;">📅</div>
-                                <div style="color: var(--text-gray);">Loading appointments...</div>
+                            <td colspan="9" style="text-align:center;padding:40px;">
+                                <div style="font-size:48px;margin-bottom:10px;">📅</div>
+                                <div style="color:var(--text-gray);">Loading appointments...</div>
                             </td>
                         </tr>
                     </tbody>
@@ -2149,674 +2100,23 @@
                 <h1 class="dashboard-title">Medical Departments</h1>
                 <div class="breadcrumb">Home / Departments</div>
             </div>
-
-            <div class="features-grid">
-                <div class="feature-card" onclick="showDepartmentDetail('cardiology')">
-                    <div class="feature-icon">🩺</div>
-                    <h3>Cardiology</h3>
-                    <p>Expert heart care with advanced cardiac testing, interventions, and comprehensive cardiovascular disease management.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('neurology')">
-                    <div class="feature-icon">🧠</div>
-                    <h3>Neurology</h3>
-                    <p>Brain and nervous system care including stroke treatment, epilepsy management, and neurological disorders.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('orthopedics')">
-                    <div class="feature-icon">🦴</div>
-                    <h3>Orthopedics</h3>
-                    <p>Bone and joint care, sports medicine, joint replacement, and trauma surgery services.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('pediatrics')">
-                    <div class="feature-icon">👶</div>
-                    <h3>Pediatrics</h3>
-                    <p>Comprehensive care for infants, children, and adolescents with specialized pediatric services.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('pulmonology')">
-                    <div class="feature-icon">🫁</div>
-                    <h3>Pulmonology</h3>
-                    <p>Respiratory care including asthma, COPD, lung infections, and critical care services.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('hematology')">
-                    <div class="feature-icon">🩸</div>
-                    <h3>Hematology</h3>
-                    <p>Blood disorder diagnosis and treatment, including anemia, clotting disorders, and blood cancers.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('oncology')">
-                    <div class="feature-icon">🎗️</div>
-                    <h3>Oncology</h3>
-                    <p>Comprehensive cancer care with medical, radiation, and surgical oncology services and clinical trials.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('gynecology')">
-                    <div class="feature-icon">🌸</div>
-                    <h3>Gynecology</h3>
-                    <p>Complete women's health services including obstetrics, gynecology, and reproductive medicine.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('dermatology')">
-                    <div class="feature-icon">🩹</div>
-                    <h3>Dermatology</h3>
-                    <p>Skin, hair, and nail care including medical, surgical, and cosmetic dermatology services.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('psychiatry')">
-                    <div class="feature-icon">🧩</div>
-                    <h3>Psychiatry</h3>
-                    <p>Mental health care including diagnosis and treatment of depression, anxiety, and behavioral disorders.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('ent')">
-                    <div class="feature-icon">👂</div>
-                    <h3>ENT</h3>
-                    <p>Ear, nose and throat care including hearing, sinus, and head & neck surgery services.</p>
-                </div>
-                <div class="feature-card" onclick="showDepartmentDetail('urology')">
-                    <div class="feature-icon">🫘</div>
-                    <h3>Urology</h3>
-                    <p>Urinary tract and male reproductive system care, including minimally invasive and robotic surgery.</p>
-                </div>
+            <!-- Admin add button -->
+            <div id="addDeptBtnWrap" style="display:none;margin-bottom:20px;">
+                <button class="btn btn-primary" onclick="openAddDeptModal()" style="display:flex;align-items:center;gap:8px;">
+                    ➕ Add Department
+                </button>
             </div>
-
-            <!-- Department Detail Sections -->
-            <div id="cardiology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🩺</div>
-                    <h2 class="department-detail-title">Cardiology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Cardiology Department is a state-of-the-art facility dedicated to providing comprehensive cardiovascular care. We utilize the latest technology and evidence-based practices to diagnose, treat, and prevent heart diseases.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Cardiac Catheterization</li>
-                            <li>Angioplasty and Stenting</li>
-                            <li>Echocardiography</li>
-                            <li>Stress Testing</li>
-                            <li>Holter Monitoring</li>
-                            <li>Pacemaker Implantation</li>
-                            <li>Heart Failure Management</li>
-                            <li>Preventive Cardiology</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Sarah Wilson</div>
-                                <div class="doctor-specialty">Interventional Cardiologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. James Carter</div>
-                                <div class="doctor-specialty">Cardiac Surgeon</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Emily Roberts</div>
-                                <div class="doctor-specialty">Electrophysiologist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Advanced Cardiac Catheterization Lab</li>
-                            <li>3D Echocardiography Systems</li>
-                            <li>CT Cardiac Imaging</li>
-                            <li>24/7 Emergency Cardiac Care</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="neurology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🧠</div>
-                    <h2 class="department-detail-title">Neurology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Neurology Department specializes in the diagnosis and treatment of disorders affecting the brain, spinal cord, and peripheral nervous system. We provide comprehensive neurological care with a multidisciplinary approach.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Stroke Care and Prevention</li>
-                            <li>Epilepsy Management</li>
-                            <li>Movement Disorder Treatment</li>
-                            <li>Headache and Migraine Clinic</li>
-                            <li>Multiple Sclerosis Care</li>
-                            <li>Neuromuscular Disorders</li>
-                            <li>Memory and Cognitive Disorders</li>
-                            <li>Sleep Disorders Clinic</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Michael Chen</div>
-                                <div class="doctor-specialty">Neurologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Patricia Lee</div>
-                                <div class="doctor-specialty">Stroke Specialist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Robert Kim</div>
-                                <div class="doctor-specialty">Movement Disorder Specialist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>MRI and CT Neuroimaging</li>
-                            <li>EEG and EMG Labs</li>
-                            <li>Neurovascular Ultrasound</li>
-                            <li>Comprehensive Stroke Unit</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="orthopedics-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🦴</div>
-                    <h2 class="department-detail-title">Orthopedics Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Orthopedics Department provides comprehensive musculoskeletal care, from sports injuries to complex joint replacements. We combine surgical excellence with advanced rehabilitation programs.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Joint Replacement Surgery</li>
-                            <li>Sports Medicine</li>
-                            <li>Trauma and Fracture Care</li>
-                            <li>Spine Surgery</li>
-                            <li>Arthroscopic Surgery</li>
-                            <li>Pediatric Orthopedics</li>
-                            <li>Hand and Wrist Surgery</li>
-                            <li>Foot and Ankle Care</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. David Martinez</div>
-                                <div class="doctor-specialty">Orthopedic Surgeon</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Jennifer White</div>
-                                <div class="doctor-specialty">Sports Medicine</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Thomas Anderson</div>
-                                <div class="doctor-specialty">Spine Specialist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Advanced Surgical Suites</li>
-                            <li>3D Imaging Systems</li>
-                            <li>Robotic-Assisted Surgery</li>
-                            <li>State-of-the-art Rehabilitation Center</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="pediatrics-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">👶</div>
-                    <h2 class="department-detail-title">Pediatrics Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Pediatrics Department is dedicated to providing comprehensive healthcare for children from birth through adolescence. We create a child-friendly environment with specialized care tailored to young patients.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Well-Child Checkups</li>
-                            <li>Vaccination Programs</li>
-                            <li>Pediatric Emergency Care</li>
-                            <li>Growth and Development Monitoring</li>
-                            <li>Chronic Disease Management</li>
-                            <li>Adolescent Medicine</li>
-                            <li>Newborn Care</li>
-                            <li>Behavioral Health Services</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Lisa Brown</div>
-                                <div class="doctor-specialty">Pediatrician</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Mark Johnson</div>
-                                <div class="doctor-specialty">Neonatologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Rachel Green</div>
-                                <div class="doctor-specialty">Pediatric Allergist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Facilities</h4>
-                        <ul>
-                            <li>Child-Friendly Examination Rooms</li>
-                            <li>Pediatric Emergency Department</li>
-                            <li>Play Therapy Areas</li>
-                            <li>Family Support Services</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="pulmonology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🫁</div>
-                    <h2 class="department-detail-title">Pulmonology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Pulmonology Department specializes in respiratory medicine, providing expert care for all lung and breathing disorders. We offer comprehensive diagnostic and treatment services for acute and chronic respiratory conditions.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Asthma Management</li>
-                            <li>COPD Treatment</li>
-                            <li>Lung Cancer Screening</li>
-                            <li>Sleep Apnea Clinic</li>
-                            <li>Pulmonary Function Testing</li>
-                            <li>Bronchoscopy</li>
-                            <li>Tuberculosis Treatment</li>
-                            <li>Pulmonary Rehabilitation</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Amanda Foster</div>
-                                <div class="doctor-specialty">Pulmonologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Christopher Lee</div>
-                                <div class="doctor-specialty">Critical Care Specialist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Maria Garcia</div>
-                                <div class="doctor-specialty">Sleep Medicine</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Advanced Pulmonary Function Lab</li>
-                            <li>Sleep Study Center</li>
-                            <li>Interventional Bronchoscopy Suite</li>
-                            <li>Respiratory Care Unit</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="hematology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🩸</div>
-                    <h2 class="department-detail-title">Hematology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Hematology Department provides expert diagnosis and treatment of blood disorders. We combine cutting-edge research with compassionate patient care to manage both benign and malignant hematologic conditions.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Anemia Treatment</li>
-                            <li>Bleeding Disorders Management</li>
-                            <li>Blood Cancer Treatment</li>
-                            <li>Bone Marrow Biopsy</li>
-                            <li>Hemophilia Care</li>
-                            <li>Sickle Cell Disease Management</li>
-                            <li>Thrombosis Clinic</li>
-                            <li>Blood Transfusion Services</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Steven Park</div>
-                                <div class="doctor-specialty">Hematologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Nicole Davis</div>
-                                <div class="doctor-specialty">Hematology-Oncologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Kevin Wright</div>
-                                <div class="doctor-specialty">Coagulation Specialist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Advanced Hematology Laboratory</li>
-                            <li>Flow Cytometry</li>
-                            <li>Coagulation Testing Lab</li>
-                            <li>Blood Bank and Transfusion Services</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="oncology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🎗️</div>
-                    <h2 class="department-detail-title">Oncology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Oncology Department is a comprehensive cancer care center offering state-of-the-art treatment including chemotherapy, immunotherapy, targeted therapy, and clinical trials with a multidisciplinary team approach.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Medical Oncology & Chemotherapy</li>
-                            <li>Radiation Therapy</li>
-                            <li>Surgical Oncology</li>
-                            <li>Immunotherapy</li>
-                            <li>Targeted Therapy</li>
-                            <li>Palliative Care</li>
-                            <li>Genetic Counseling</li>
-                            <li>Cancer Screening Programs</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Susan Hall</div>
-                                <div class="doctor-specialty">Medical Oncologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Brian Turner</div>
-                                <div class="doctor-specialty">Radiation Oncologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Diana Price</div>
-                                <div class="doctor-specialty">Surgical Oncologist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Linear Accelerator (LINAC)</li>
-                            <li>PET-CT Imaging</li>
-                            <li>Robotic Surgical Systems</li>
-                            <li>Infusion Center</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="gynecology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🌸</div>
-                    <h2 class="department-detail-title">Gynecology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Gynecology Department provides comprehensive women's healthcare from adolescence through menopause. We offer complete obstetric and gynecologic services in a supportive, patient-centered environment.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Prenatal & Postnatal Care</li>
-                            <li>High-Risk Pregnancy Management</li>
-                            <li>Laparoscopic Surgery</li>
-                            <li>Fertility Treatments</li>
-                            <li>Menopause Management</li>
-                            <li>Gynecologic Oncology</li>
-                            <li>Family Planning</li>
-                            <li>Women's Wellness Checkups</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Rachel Green</div>
-                                <div class="doctor-specialty">OB/GYN</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Karen Adams</div>
-                                <div class="doctor-specialty">Maternal-Fetal Medicine</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Helen Moore</div>
-                                <div class="doctor-specialty">Reproductive Endocrinologist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>4D Ultrasound Suite</li>
-                            <li>State-of-the-art Labor & Delivery</li>
-                            <li>Laparoscopic Surgical Suite</li>
-                            <li>NICU Level III</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="dermatology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🩹</div>
-                    <h2 class="department-detail-title">Dermatology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Dermatology Department offers complete skin, hair, and nail care. We combine medical expertise with advanced technology to diagnose and treat all types of skin conditions, from routine to complex cases.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Acne & Rosacea Treatment</li>
-                            <li>Eczema & Psoriasis Management</li>
-                            <li>Skin Cancer Screening & Surgery</li>
-                            <li>Hair Loss Treatment</li>
-                            <li>Laser Therapy</li>
-                            <li>Botox & Fillers</li>
-                            <li>Patch Testing (Allergies)</li>
-                            <li>Pediatric Dermatology</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Olivia Scott</div>
-                                <div class="doctor-specialty">Dermatologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Nathan Bailey</div>
-                                <div class="doctor-specialty">Cosmetic Dermatologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Mia Cooper</div>
-                                <div class="doctor-specialty">Pediatric Dermatologist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Dermatoscopy</li>
-                            <li>Laser & Light Therapy Systems</li>
-                            <li>Confocal Microscopy</li>
-                            <li>Phototherapy Unit</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="psychiatry-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🧩</div>
-                    <h2 class="department-detail-title">Psychiatry Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Psychiatry Department provides compassionate, evidence-based mental health care. We treat a wide spectrum of psychiatric conditions using medication management, psychotherapy, and innovative therapies in a safe environment.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Depression & Anxiety Treatment</li>
-                            <li>Bipolar Disorder Management</li>
-                            <li>Schizophrenia Care</li>
-                            <li>PTSD & Trauma Therapy</li>
-                            <li>Child & Adolescent Psychiatry</li>
-                            <li>Addiction Medicine</li>
-                            <li>Electroconvulsive Therapy (ECT)</li>
-                            <li>Group Therapy Programs</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Alan Hughes</div>
-                                <div class="doctor-specialty">Psychiatrist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Sophie Reed</div>
-                                <div class="doctor-specialty">Child Psychiatrist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. George Nelson</div>
-                                <div class="doctor-specialty">Addiction Specialist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Facilities</h4>
-                        <ul>
-                            <li>Inpatient Psychiatric Unit</li>
-                            <li>Day Hospital Program</li>
-                            <li>Crisis Intervention Center</li>
-                            <li>Outpatient Therapy Suites</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="ent-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">👂</div>
-                    <h2 class="department-detail-title">ENT Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our ENT Department provides comprehensive care for ear, nose, and throat conditions. From routine hearing tests to complex head and neck surgery, our team delivers expert care with cutting-edge technology.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Hearing Evaluation & Aids</li>
-                            <li>Sinus & Allergy Treatment</li>
-                            <li>Tonsil & Adenoid Surgery</li>
-                            <li>Head & Neck Cancer Surgery</li>
-                            <li>Balance Disorders</li>
-                            <li>Voice & Swallowing Disorders</li>
-                            <li>Cochlear Implants</li>
-                            <li>Sleep Apnea Surgery</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Fiona Grant</div>
-                                <div class="doctor-specialty">Otolaryngologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. James Collins</div>
-                                <div class="doctor-specialty">Head & Neck Surgeon</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Laura Evans</div>
-                                <div class="doctor-specialty">Audiologist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>Audiometry & Tympanometry Labs</li>
-                            <li>Endoscopic Sinus Surgery Suite</li>
-                            <li>Cochlear Implant Program</li>
-                            <li>Laryngoscopy Suite</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
-            </div>
-
-            <div id="urology-detail" class="department-detail">
-                <div class="department-detail-header">
-                    <div class="department-detail-icon">🫘</div>
-                    <h2 class="department-detail-title">Urology Department</h2>
-                </div>
-                <div class="department-detail-content">
-                    <div class="department-info-section">
-                        <h4>About the Department</h4>
-                        <p>Our Urology Department offers comprehensive care for urinary tract and male reproductive system conditions. We specialize in minimally invasive and robotic surgical techniques for faster recovery and better outcomes.</p>
-                        <h4>Services Offered</h4>
-                        <ul>
-                            <li>Kidney Stone Treatment</li>
-                            <li>Prostate Care & Surgery</li>
-                            <li>Bladder Cancer Treatment</li>
-                            <li>Robotic Prostatectomy</li>
-                            <li>Urinary Incontinence</li>
-                            <li>Male Infertility</li>
-                            <li>Renal Transplant</li>
-                            <li>Pediatric Urology</li>
-                        </ul>
-                    </div>
-                    <div class="department-info-section">
-                        <h4>Our Specialists</h4>
-                        <div class="department-doctors">
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Charles Webb</div>
-                                <div class="doctor-specialty">Urologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Emma Powell</div>
-                                <div class="doctor-specialty">Pediatric Urologist</div>
-                            </div>
-                            <div class="doctor-mini-card">
-                                <div class="doctor-name">Dr. Henry Long</div>
-                                <div class="doctor-specialty">Renal Transplant Specialist</div>
-                            </div>
-                        </div>
-                        <h4 style="margin-top: 20px;">Equipment & Technology</h4>
-                        <ul>
-                            <li>da Vinci Robotic Surgical System</li>
-                            <li>Urodynamics Lab</li>
-                            <li>Laser Lithotripsy</li>
-                            <li>Cystoscopy Suite</li>
-                        </ul>
-                    </div>
-                </div>
-                <button class="close-detail-btn" onclick="closeDepartmentDetail()">Close</button>
-                <div style="clear: both;"></div>
+            <div id="departmentsGrid" class="features-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">Loading departments...</div>
             </div>
         </div>
     </div>
+            <!-- Dynamic Department Detail (rendered by JS) -->
+            <div id="dept-detail-container" style="margin-top:30px;"></div>
+        </div>
+    </div>
 
-    <!-- BILLING PAGE -->
+        <!-- BILLING PAGE -->
     <div id="billing" class="page">
         <div class="dashboard">
             <div class="dashboard-header">
@@ -3796,6 +3096,9 @@
         // Show/hide admin Add Doctor button
         const addDocBtn = document.getElementById('addDoctorBtnWrap');
         if (addDocBtn) addDocBtn.style.display = (loggedIn && currentUser?.role === 'admin') ? 'flex' : 'none';
+        // Show/hide admin Add Department button
+        const addDeptBtn = document.getElementById('addDeptBtnWrap');
+        if (addDeptBtn) addDeptBtn.style.display = (loggedIn && currentUser?.role === 'admin') ? 'block' : 'none';
         // Re-render doctor cards to toggle admin buttons
         if (document.getElementById('doctors')?.classList.contains('active')) renderDoctorCards();
 
@@ -3850,22 +3153,15 @@
             setStatEl('dash-today-appts', s.today_appointments);
             setStatEl('dash-pending', s.pending);
             // Update appointments page stats
-            setStatEl('appt-stat-today', s.today_appointments);
+            setStatEl('appt-stat-total', s.total_appointments);
             setStatEl('appt-stat-confirmed', s.confirmed);
             setStatEl('appt-stat-pending', s.pending);
             setStatEl('appt-stat-cancelled', s.cancelled);
             // Update patient page stat cards from DB
             setStatEl('patients-page-total', s.total_patients);
-            setStatEl('patients-page-active', s.total_patients); // all registered = active
-            setStatEl('patients-page-appointments', s.total_appointments);
-            // New-this-month: fetch from patient report for accuracy
-            try {
-                const pr = await fetch('/api/reports/patients').then(rr=>rr.json());
-                const now = new Date();
-                const ym  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-                const newThisMonth = (pr.patients||[]).filter(p => (p.created_at||'').startsWith(ym)).length;
-                setStatEl('patients-page-new', newThisMonth);
-            } catch(e2) { setStatEl('patients-page-new', '—'); }
+            setStatEl('patients-page-active', s.total_patients);
+            setStatEl('patients-page-pending', s.pending);
+            setStatEl('patients-page-cancelled', s.cancelled);
         } catch(e) { console.log('Stats load error:', e); }
     }
 
@@ -3902,6 +3198,7 @@
         if (pageId === 'appointments') { renderAppointmentsTable(); loadDashboardStats(); }
         if (pageId === 'patients')     { renderPatientsTable();     loadDashboardStats(); }
         if (pageId === 'doctors')      { loadDoctorsPage(); }
+        if (pageId === 'departments')  { loadDepartmentsPage(); }
         if (pageId === 'dbviewer')     { loadDbViewer(); }
         if (pageId === 'emailsettings') { loadEmailConfig(); }
         if (pageId === 'usermgmt')     { loadUsersTable(); }
@@ -4264,36 +3561,61 @@
     async function renderAppointmentsTable() {
         const tbody = document.querySelector('#appointmentsTable tbody');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-gray);">Loading from database...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-gray);">Loading...</td></tr>';
+
+        const today = new Date().toISOString().split("T")[0];
+        const dateFilter = document.getElementById("appt-date-filter")?.value || "";
+
         try {
-            const appts = await fetch('/api/appointments').then(r => r.json());
-            tbody.innerHTML = '';
-            if (!appts.length) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;"><div style="font-size:48px;">📅</div><div style="color:var(--text-gray);">No appointments yet</div></td></tr>';
+            const appts = await fetch("/api/appointments").then(r => r.json());
+
+            // Update stat boxes with real counts (scoped to this doctor automatically via API)
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl("appt-stat-today",     appts.filter(a => a.appointment_date === today).length);
+            setEl("appt-stat-confirmed", appts.filter(a => a.status === "Confirmed").length);
+            setEl("appt-stat-pending",   appts.filter(a => a.status === "Pending").length);
+            setEl("appt-stat-cancelled", appts.filter(a => a.status === "Cancelled").length);
+
+            // Update title for doctors
+            if (currentUser?.role === "doctor") {
+                const t = document.getElementById("appt-page-title");
+                if (t) t.textContent = "My Appointments";
+            }
+
+            // Filter by selected date
+            let filtered = dateFilter ? appts.filter(a => a.appointment_date === dateFilter) : appts;
+
+            tbody.innerHTML = "";
+            if (!filtered.length) {
+                const msg = dateFilter ? `No appointments on <strong>${dateFilter}</strong>` : "No appointments yet";
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;"><div style="font-size:48px;">📅</div><div style="color:var(--text-gray);margin-top:8px;">${msg}</div></td></tr>`;
                 return;
             }
-            appts.forEach(a => {
-                const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG['Pending'];
+
+            // Sort by date then time
+            filtered.sort((a,b) => (a.appointment_date+a.appointment_time).localeCompare(b.appointment_date+b.appointment_time));
+
+            filtered.forEach(a => {
+                const cfg = STATUS_CONFIG[a.status] || STATUS_CONFIG["Pending"];
+                const isToday = a.appointment_date === today;
                 const statusBadge = currentUser
-                    ? `<span class="status-badge ${cfg.cls}" onclick="openStatusModal(${a.id})"
-                           style="cursor:pointer;border:2px solid ${cfg.color};"
-                           title="Click to manage">${cfg.icon} ${a.status}</span>`
+                    ? `<span class="status-badge ${cfg.cls}" onclick="openStatusModal(${a.id})" style="cursor:pointer;border:2px solid ${cfg.color};" title="Click to manage">${cfg.icon} ${a.status}</span>`
                     : `<span class="status-badge ${cfg.cls}">${cfg.icon} ${a.status}</span>`;
                 tbody.innerHTML += `
-                <tr id="appt-row-${a.id}">
-                    <td><strong>#APT-${String(a.id).padStart(3,'0')}</strong></td>
+                <tr id="appt-row-${a.id}" ${isToday && !dateFilter ? "style=\"background:#f0f9ff;\"" : ""}>
+                    <td><strong>#APT-${String(a.id).padStart(3,"0")}</strong>${isToday && !dateFilter ? " <span style=\"background:#0066FF;color:white;font-size:10px;padding:2px 6px;border-radius:10px;\">TODAY</span>" : ""}</td>
                     <td>${a.patient_name}</td>
                     <td>${a.doctor_name}</td>
                     <td>${a.appointment_date}</td>
                     <td>${a.appointment_time}</td>
-                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${a.reason||''}">${a.reason||'-'}</td>
-                    <td style="font-weight:700;">${a.amount > 0 ? '₹'+Number(a.amount).toLocaleString('en-IN') : '<span style="color:#FFB800;font-size:12px;">⏳ Not set</span>'}</td>
+                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${a.reason||""}">${a.reason||"-"}</td>
+                    <td style="font-weight:700;">${a.amount > 0 ? "₹"+Number(a.amount).toLocaleString("en-IN") : "<span style=\"color:#FFB800;font-size:12px;\">⏳ Not set</span>"}</td>
                     <td>${statusBadge}</td>
-                    <td><button class="action-btn" onclick="openStatusModal(${a.id})">${currentUser ? '⚙️ Manage' : '👁️ View'}</button></td>
+                    <td><button class="action-btn" onclick="openStatusModal(${a.id})">${currentUser ? "⚙️ Manage" : "👁️ View"}</button></td>
                 </tr>`;
             });
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;padding:30px;">Error loading. Is the server running?</td></tr>';
+            tbody.innerHTML = "<tr><td colspan=\"9\" style=\"text-align:center;color:red;padding:30px;\">Error loading appointments.</td></tr>";
         }
     }
 
@@ -4522,45 +3844,543 @@
     async function cancelAppointment(id) { openStatusModal(id); }
     async function viewAppointment(id)   { openStatusModal(id); }
 
-    // ── Patients Table ────────────────────────────────────────────────────────
+    // ── Departments Page ──────────────────────────────────────────────────────
+    let _allDepts = [];
+    let _allDocsByDept = {};
+
+    async function loadDepartmentsPage() {
+        const grid = document.getElementById('departmentsGrid');
+        const addBtn = document.getElementById('addDeptBtnWrap');
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        if (addBtn) addBtn.style.display = isAdmin ? 'block' : 'none';
+        if (!grid) return;
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">Loading...</div>';
+        try {
+            const [depts, docs] = await Promise.all([
+                fetch('/api/departments').then(r=>r.json()),
+                fetch('/api/doctors').then(r=>r.json())
+            ]);
+            _allDepts = depts;
+            // Group doctors by department
+            _allDocsByDept = {};
+            docs.forEach(d => {
+                if (!_allDocsByDept[d.department]) _allDocsByDept[d.department] = [];
+                _allDocsByDept[d.department].push(d);
+            });
+
+            if (!depts.length) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">No departments found.</div>';
+                return;
+            }
+
+            // Clear detail panel
+            const detail = document.getElementById('dept-detail-container');
+            if (detail) detail.innerHTML = '';
+
+            grid.innerHTML = depts.map(d => {
+                const docCount = (_allDocsByDept[d.name] || []).length;
+                const adminBtns = isAdmin ? `
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12px;" onclick="event.stopPropagation();openEditDeptModal(${d.id},'${d.name.replace(/'/g,"\\'")}','${(d.icon||'🏥').replace(/'/g,"\\'")}','${(d.description||'').replace(/'/g,"\\'").replace(/\n/g,' ')}')">✏️ Edit</button>
+                        <button class="btn" style="flex:1;padding:7px;font-size:12px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="event.stopPropagation();deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+                    </div>` : '';
+                return `<div class="feature-card" id="dept-card-${d.id}" style="display:flex;flex-direction:column;cursor:pointer;transition:all .2s;" onclick="showDeptDetail(${d.id})">
+                    <div class="feature-icon">${d.icon||'🏥'}</div>
+                    <h3 style="font-size:16px;">${d.name}</h3>
+                    <p style="color:var(--text-gray);font-size:13px;flex:1;">${d.description||'Specialized medical care and treatment.'}</p>
+                    <div style="margin-top:8px;font-size:12px;color:#0066FF;font-weight:600;">👨‍⚕️ ${docCount} Doctor${docCount!==1?'s':''}</div>
+                    ${adminBtns}
+                </div>`;
+            }).join('');
+        } catch(e) {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:red;padding:40px;">Error loading departments.</div>';
+        }
+    }
+
+    function showDeptDetail(id) {
+        const dept = _allDepts.find(d => d.id === id);
+        if (!dept) return;
+        const doctors = _allDocsByDept[dept.name] || [];
+        const detail = document.getElementById('dept-detail-container');
+        if (!detail) return;
+
+        // Highlight selected card
+        document.querySelectorAll('.feature-card[id^="dept-card-"]').forEach(c => {
+            c.style.borderColor = '';
+            c.style.boxShadow = '';
+        });
+        const card = document.getElementById(`dept-card-${id}`);
+        if (card) {
+            card.style.borderColor = '#0066FF';
+            card.style.boxShadow = '0 0 0 3px rgba(0,102,255,0.15)';
+        }
+
+        // Department info content based on name (fallback to generic)
+        const deptInfo = getDeptInfo(dept.name, dept.description);
+
+        const doctorCards = doctors.length
+            ? doctors.map(doc => `
+                <div style="background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid #E5E7EB;display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                    <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#0066FF,#00D9B5);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👨‍⚕️</div>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;color:#1a1f36;">${doc.name}</div>
+                        <div style="font-size:12px;color:#0066FF;font-weight:600;">${doc.specialization||'Specialist'}</div>
+                        ${doc.qualification ? `<div style="font-size:11px;color:#9CA3AF;margin-top:2px;">🎓 ${doc.qualification} &nbsp;·&nbsp; ⏱ ${doc.experience||0} yrs</div>` : ''}
+                        ${doc.contact ? `<div style="font-size:11px;color:#9CA3AF;">📞 ${doc.contact}</div>` : ''}
+                    </div>
+                </div>`).join('')
+            : `<div style="color:#9CA3AF;font-style:italic;padding:16px;text-align:center;">No doctors currently assigned.</div>`;
+
+        detail.innerHTML = `
+        <div style="background:white;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;margin-top:16px;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#1a1f36,#2d3348);padding:24px 32px;display:flex;align-items:center;gap:18px;">
+                <div style="font-size:48px;">${dept.icon||'🏥'}</div>
+                <div style="flex:1;">
+                    <h2 style="color:white;font-size:22px;font-weight:800;margin:0;">${dept.name} Department</h2>
+                    <p style="color:rgba(255,255,255,0.65);margin:5px 0 0;font-size:13px;">MediCare Plus · Specialized Care Unit</p>
+                </div>
+                <button onclick="closeDeptDetail()" style="background:rgba(255,255,255,0.15);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;line-height:1;flex-shrink:0;">×</button>
+            </div>
+
+            <!-- Two-column body -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+
+                <!-- LEFT: Department Information -->
+                <div style="padding:28px;border-right:1px solid #E5E7EB;">
+                    <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin:0 0 16px;">About the Department</h3>
+
+                    <p style="color:#374151;font-size:14px;line-height:1.7;margin-bottom:20px;">${deptInfo.about}</p>
+
+                    <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin:0 0 12px;">Services Offered</h3>
+                    <ul style="padding:0;margin:0 0 20px;list-style:none;display:flex;flex-direction:column;gap:7px;">
+                        ${deptInfo.services.map(s=>`
+                        <li style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;">
+                            <span style="color:#00C853;font-size:15px;">✓</span> ${s}
+                        </li>`).join('')}
+                    </ul>
+
+                    <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin:0 0 12px;">Working Hours</h3>
+                    <div style="background:#f0f9ff;border-radius:10px;padding:12px 14px;font-size:13px;color:#374151;line-height:1.8;">
+                        🕘 <strong>OPD:</strong> Mon – Sat, 9:00 AM – 5:00 PM<br>
+                        🚨 <strong>Emergency:</strong> 24 / 7 Available<br>
+                        📞 <strong>Helpline:</strong> 1800-MED-CARE
+                    </div>
+                </div>
+
+                <!-- RIGHT: Doctors List -->
+                <div style="padding:28px;">
+                    <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin:0 0 16px;">Our Specialists <span style="background:#0066FF;color:white;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-left:6px;">${doctors.length}</span></h3>
+                    <div style="max-height:420px;overflow-y:auto;padding-right:4px;">
+                        ${doctorCards}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        setTimeout(() => detail.scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
+    }
+
+    // Department info database
+    function getDeptInfo(name, fallbackDesc) {
+        const info = {
+            'Cardiology': {
+                about: 'The Cardiology Department specializes in diagnosing and treating diseases of the heart and blood vessels. Our team of expert cardiologists uses state-of-the-art technology to manage conditions ranging from hypertension and arrhythmias to complex coronary artery disease and heart failure.',
+                services: ['Echocardiography & ECG','Coronary Angioplasty & Stenting','Cardiac Catheterization','Heart Failure Management','Pacemaker Implantation','Holter Monitoring','Stress Testing','Electrophysiology Studies']
+            },
+            'Neurology': {
+                about: 'Our Neurology Department provides comprehensive care for disorders of the brain, spinal cord, and peripheral nervous system. We combine cutting-edge diagnostics with the latest evidence-based treatments to improve quality of life for patients with neurological conditions.',
+                services: ['Stroke Diagnosis & Treatment','Epilepsy Management','EEG & EMG Studies','Multiple Sclerosis Care','Headache & Migraine Clinic','Parkinson\'s Disease Treatment','Memory & Dementia Clinic','Neuromuscular Disorders']
+            },
+            'Orthopedics': {
+                about: 'The Orthopedics Department offers comprehensive care for musculoskeletal conditions including bone, joint, muscle, and ligament disorders. From sports injuries to complex joint replacements, our surgeons use minimally invasive techniques for faster recovery.',
+                services: ['Joint Replacement Surgery','Sports Medicine & Injury','Spine Surgery','Fracture Care & Trauma','Arthroscopy','Pediatric Orthopedics','Bone Tumor Management','Physiotherapy & Rehabilitation']
+            },
+            'Pediatrics': {
+                about: 'Our Pediatrics Department is dedicated to the physical, emotional, and social well-being of children from birth through adolescence. We provide a child-friendly environment with compassionate specialists trained in all aspects of child health.',
+                services: ['Newborn & Neonatal Care','Growth & Development Assessment','Childhood Vaccinations','Pediatric Emergency Care','Asthma & Allergy Management','Child Nutrition Counseling','Adolescent Medicine','Pediatric Surgery']
+            },
+            'Pulmonology': {
+                about: 'The Pulmonology Department focuses on the prevention, diagnosis, and treatment of diseases affecting the lungs and respiratory system. We offer advanced diagnostic and therapeutic services for both acute and chronic respiratory conditions.',
+                services: ['Asthma & COPD Management','Pulmonary Function Tests','Bronchoscopy','Sleep Apnea & Sleep Studies','Interstitial Lung Disease','Lung Cancer Screening','Respiratory ICU','Smoking Cessation Program']
+            },
+            'Hematology': {
+                about: 'Our Hematology Department specializes in blood disorders and diseases of the blood-forming organs. We provide expert care for a wide spectrum of benign and malignant hematological conditions with a multidisciplinary approach.',
+                services: ['Anemia Diagnosis & Treatment','Blood Cancer (Leukemia/Lymphoma)','Bone Marrow Biopsy','Coagulation Disorder Management','Platelet Disorders','Sickle Cell Disease Care','Blood Transfusion Services','Stem Cell Transplantation']
+            },
+            'Oncology': {
+                about: 'The Oncology Department provides compassionate, comprehensive cancer care with a multidisciplinary team of medical, surgical, and radiation oncologists. We offer the latest treatment protocols, clinical trials, and supportive care services.',
+                services: ['Chemotherapy & Immunotherapy','Radiation Therapy','Surgical Oncology','Cancer Genetic Counseling','Palliative & Supportive Care','Tumor Board Consultations','Cancer Rehabilitation','Clinical Trials Access']
+            },
+            'Gynecology': {
+                about: 'Our Gynecology Department offers complete women\'s health services from adolescence through menopause and beyond. We provide compassionate, personalized care for all aspects of female reproductive health and obstetric needs.',
+                services: ['Prenatal & Antenatal Care','High-Risk Pregnancy Management','Laparoscopic Gynecology','PCOS & Endometriosis','Infertility & IVF Support','Menopause Management','Cervical Cancer Screening','Urogynecology']
+            },
+            'Dermatology': {
+                about: 'The Dermatology Department provides expert diagnosis and treatment for conditions of the skin, hair, and nails. Our dermatologists combine medical expertise with cosmetic dermatology to deliver comprehensive skin health care.',
+                services: ['Acne & Psoriasis Treatment','Skin Cancer Detection & Surgery','Cosmetic Dermatology','Hair Loss Treatment','Allergy & Patch Testing','Laser Therapy','Vitiligo Management','Pediatric Dermatology']
+            },
+            'Psychiatry': {
+                about: 'Our Psychiatry Department offers compassionate mental health care for individuals across all age groups. We believe in a holistic approach combining medication management, psychotherapy, and community support for lasting mental wellness.',
+                services: ['Depression & Anxiety Treatment','Psychiatric Evaluation','Cognitive Behavioral Therapy','Addiction & De-addiction','Child & Adolescent Psychiatry','Geriatric Psychiatry','PTSD & Trauma Therapy','Psychosocial Rehabilitation']
+            },
+            'ENT': {
+                about: 'The ENT (Ear, Nose & Throat) Department specializes in diagnosing and treating disorders of the ear, nose, throat, head, and neck. Our specialists use advanced endoscopic and surgical techniques for accurate diagnosis and effective treatment.',
+                services: ['Hearing Loss & Audiometry','Sinus & Nasal Disorders','Throat & Voice Disorders','Head & Neck Surgery','Tonsil & Adenoid Surgery','Balance & Vertigo Clinic','Cochlear Implants','Sleep-Disordered Breathing']
+            },
+            'Urology': {
+                about: 'Our Urology Department provides advanced care for urinary tract conditions in men, women, and children, as well as male reproductive health. We specialize in minimally invasive and robotic surgical techniques for superior outcomes.',
+                services: ['Kidney Stone Treatment (PCNL/ESWL)','Prostate Care & Surgery','Bladder Cancer Management','Robotic Prostatectomy','Urinary Incontinence','Male Infertility & Andrology','Renal Transplantation','Pediatric Urology']
+            },
+        };
+        return info[name] || {
+            about: fallbackDesc || `The ${name} Department provides specialized medical care and treatment with a team of experienced specialists dedicated to delivering the highest standard of healthcare.`,
+            services: ['Specialist Consultations','Diagnostic Services','Treatment & Management','Follow-up Care','Emergency Services','Preventive Care','Patient Education','Rehabilitation Support']
+        };
+    }
+
+    function closeDeptDetail() {
+        const detail = document.getElementById('dept-detail-container');
+        if (detail) detail.innerHTML = '';
+        document.querySelectorAll('.feature-card[id^="dept-card-"]').forEach(c => {
+            c.style.borderColor = '';
+            c.style.boxShadow = '';
+        });
+    }
+
+    function bookWithDept(deptName) {
+        openModal('appointmentModal');
+        setTimeout(async () => {
+            const depts = await fetch('/api/departments').then(r=>r.json());
+            const match = depts.find(d => d.name === deptName);
+            const dS = document.getElementById('appt-department');
+            if (dS && match) {
+                dS.value = match.slug;
+                dS.dispatchEvent(new Event('change'));
+            }
+        }, 300);
+    }
+
+    function openAddDeptModal() {
+        buildDeptModal();
+        document.getElementById('dept-modal-title').textContent = '➕ Add Department';
+        document.getElementById('dept-edit-id').value = '';
+        document.getElementById('dept-name').value = '';
+        document.getElementById('dept-icon').value = '🏥';
+        document.getElementById('dept-desc').value = '';
+        document.getElementById('deptModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openEditDeptModal(id, name, icon, desc) {
+        buildDeptModal();
+        document.getElementById('dept-modal-title').textContent = '✏️ Edit Department';
+        document.getElementById('dept-edit-id').value = id;
+        document.getElementById('dept-name').value = name;
+        document.getElementById('dept-icon').value = icon;
+        document.getElementById('dept-desc').value = desc;
+        document.getElementById('deptModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function buildDeptModal() {
+        if (document.getElementById('deptModal')) return;
+        const div = document.createElement('div');
+        div.id = 'deptModal';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="modal" style="max-width:480px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="dept-modal-title">Department</h2>
+                <button class="modal-close" onclick="closeDeptModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="dept-edit-id">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Department Name *</label>
+                        <input type="text" id="dept-name" class="form-input" placeholder="e.g. Cardiology">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon (emoji)</label>
+                        <input type="text" id="dept-icon" class="form-input" placeholder="🏥" style="font-size:20px;">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Description</label>
+                        <textarea id="dept-desc" class="form-textarea" rows="3" placeholder="Brief description of the department..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeDeptModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDept()">💾 Save Department</button>
+            </div>
+        </div>`;
+        document.body.appendChild(div);
+        div.addEventListener('click', e => { if (e.target===div) closeDeptModal(); });
+    }
+
+    function closeDeptModal() {
+        const m = document.getElementById('deptModal');
+        if (m) { m.classList.remove('active'); document.body.style.overflow = 'auto'; }
+    }
+
+    async function saveDept() {
+        const id   = document.getElementById('dept-edit-id').value;
+        const name = document.getElementById('dept-name').value.trim();
+        const icon = document.getElementById('dept-icon').value.trim() || '🏥';
+        const desc = document.getElementById('dept-desc').value.trim();
+        if (!name) { showToast('❌ Department name is required', 'error'); return; }
+        try {
+            let r;
+            if (id) {
+                r = await fetch(`/api/departments/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({name, icon, description: desc})
+                });
+            } else {
+                const slug = name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+                r = await fetch('/api/departments', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({name, icon, description: desc, slug})
+                });
+            }
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Save failed'), 'error'); return; }
+            closeDeptModal();
+            showToast(`✅ Department ${id?'updated':'added'} successfully!`, 'success');
+            await loadDepartmentsPage();
+        } catch(e) { showToast('❌ Network error', 'error'); }
+    }
+
+    async function deleteDept(id, name) {
+        if (!confirm(`Delete "${name}" department? This cannot be undone.`)) return;
+        try {
+            const r = await fetch(`/api/departments/${id}`, {method:'DELETE'});
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Delete failed'), 'error'); return; }
+            showToast(`✅ "${name}" department deleted.`, 'success');
+            await loadDepartmentsPage();
+        } catch(e) { showToast('❌ Network error', 'error'); }
+    }
     async function renderPatientsTable() {
         const tbody = document.querySelector('#patientsTable tbody');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;">Loading from database...</td></tr>';
+        const search = (document.getElementById('patient-search-input')?.value || '').toLowerCase().trim();
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-gray);">Loading...</td></tr>';
         try {
-            const pts = await fetch('/api/patients').then(r=>r.json());
+            const [pts, admissions] = await Promise.all([
+                fetch('/api/patients').then(r=>r.json()),
+                currentUser ? fetch('/api/admissions').then(r=>r.json()).catch(()=>[]) : Promise.resolve([])
+            ]);
+            // Build admitted patient set
+            const admittedMap = {};
+            admissions.forEach(a => {
+                if (a.status === 'Admitted') admittedMap[a.patient_id] = a;
+            });
+
+            let filtered = pts;
+            if (search) {
+                filtered = pts.filter(p =>
+                    (p.first_name+' '+p.last_name).toLowerCase().includes(search) ||
+                    (p.contact||'').includes(search) ||
+                    (p.email||'').toLowerCase().includes(search) ||
+                    (p.blood_group||'').toLowerCase().includes(search)
+                );
+            }
+
             tbody.innerHTML = '';
-            if (!pts.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;"><div style="font-size:48px;">👥</div><div style="color:var(--text-gray);">No patients yet</div></td></tr>';
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;"><div style="font-size:48px;">👥</div><div style="color:var(--text-gray);margin-top:8px;">${search ? 'No patients match "'+search+'"' : 'No patients yet'}</div></td></tr>`;
                 return;
             }
-            pts.forEach(p => {
-                const missingBlood   = !p.blood_group;
-                const missingAddress = !p.address;
-                const hasMissing     = missingBlood || missingAddress;
-                const missingBadge   = hasMissing && currentUser
-                    ? `<span title="Missing: ${[missingBlood?'Blood Group':'',missingAddress?'Address':''].filter(Boolean).join(', ')}" style="display:inline-block;background:#FFB800;color:white;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;vertical-align:middle;">⚠ incomplete</span>`
-                    : '';
+            filtered.forEach(p => {
+                const admitted = admittedMap[p.id];
+                const statusBadge = admitted
+                    ? `<span style="background:#FF6B6B;color:white;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">🏥 Admitted</span>`
+                    : `<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ Outpatient</span>`;
+                const missingBlood = !p.blood_group;
                 const editBtn = currentUser
-                    ? `<button class="action-btn" style="background:#0066FF;color:white;margin-left:6px;" onclick="openEditPatient(${p.id})">✏ Edit</button>`
+                    ? `<button class="action-btn" style="background:#0066FF;color:white;" onclick="openEditPatient(${p.id})">✏ Edit</button>`
+                    : '';
+                const admitBtn = currentUser && (currentUser.role === 'doctor' || currentUser.role === 'admin' || currentUser.role === 'staff')
+                    ? admitted
+                        ? `<button class="action-btn" style="background:#00C853;color:white;" onclick="openAdmissionDetail(${p.id})">🏥 View Admission</button>`
+                        : `<button class="action-btn" style="background:#FFB800;color:white;" onclick="openAdmitModal(${p.id},'${(p.first_name+' '+p.last_name).replace(/'/g,"\'")}')">➕ Admit</button>`
                     : '';
                 tbody.innerHTML += `
                 <tr>
-                    <td>#P${String(p.id).padStart(4,'0')}</td>
-                    <td>${p.first_name} ${p.last_name}${missingBadge}</td>
+                    <td><strong>#P${String(p.id).padStart(4,'0')}</strong></td>
+                    <td>${p.first_name} ${p.last_name}</td>
                     <td>${p.gender}</td>
                     <td style="${missingBlood?'color:#FFB800;font-style:italic;':''}">${p.blood_group||'<em style="color:#FFB800">Not set</em>'}</td>
                     <td>${p.contact}</td>
                     <td>${p.email||'N/A'}</td>
-                    <td><button class="action-btn" onclick="viewPatient(${p.id})">View</button>${editBtn}</td>
+                    <td>${statusBadge}</td>
+                    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                        <button class="action-btn" onclick="viewPatient(${p.id})">👁 View</button>
+                        ${editBtn}
+                        ${admitBtn}
+                    </td>
                 </tr>`;
             });
-        } catch(e) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;padding:30px;">Error loading patients.</td></tr>`; }
+        } catch(e) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">Error loading patients.</td></tr>`; }
     }
 
     async function viewPatient(id) {
-        const p = await fetch(`/api/patients/${id}`).then(r=>r.json());
-        showToast(`👤 #P${String(id).padStart(4,'0')} — ${p.first_name} ${p.last_name}\n\nDOB: ${p.date_of_birth}\nGender: ${p.gender}\nBlood: ${p.blood_group||'N/A'}\nContact: ${p.contact}\nEmail: ${p.email||'N/A'}\nAddress: ${p.address||'N/A'}`, 'info');
+        try {
+            const [p, admissions, appts] = await Promise.all([
+                fetch(`/api/patients/${id}`).then(r=>r.json()),
+                currentUser ? fetch(`/api/patients/${id}/admissions`).then(r=>r.json()).catch(()=>[]) : Promise.resolve([]),
+                currentUser ? fetch('/api/appointments').then(r=>r.json()).then(a=>a.filter(x=>x.patient_id===id)).catch(()=>[]) : Promise.resolve([])
+            ]);
+            showPatientDetailModal(p, admissions, appts);
+        } catch(e) { showToast('❌ Could not load patient details', 'error'); }
+    }
+
+    async function openAdmissionDetail(patientId) {
+        try {
+            const [p, admissions, appts] = await Promise.all([
+                fetch(`/api/patients/${patientId}`).then(r=>r.json()),
+                fetch(`/api/patients/${patientId}/admissions`).then(r=>r.json()),
+                fetch('/api/appointments').then(r=>r.json()).then(a=>a.filter(x=>x.patient_id===patientId)).catch(()=>[])
+            ]);
+            showPatientDetailModal(p, admissions, appts, true);
+        } catch(e) { showToast('❌ Error loading admission', 'error'); }
+    }
+
+    function showPatientDetailModal(p, admissions, appts, focusAdmission=false) {
+        const existing = document.getElementById('patientDetailModal');
+        if (existing) existing.remove();
+
+        const currentAdmission = admissions.find(a => a.status === 'Admitted') || admissions[0];
+
+        const infoRow = (label, value, highlight=false) =>
+            `<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                <span style="font-size:12px;color:#6B7280;font-weight:600;min-width:130px;">${label}</span>
+                <span style="font-size:13px;color:${highlight?'#0066FF':'#1a1f36'};font-weight:${highlight?'700':'500'};text-align:right;">${value||'—'}</span>
+            </div>`;
+
+        const admissionSection = currentAdmission ? `
+            <div style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1.5px solid #FCD34D;border-radius:14px;padding:20px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                    <span style="font-size:20px;">🏥</span>
+                    <span style="font-weight:800;font-size:15px;color:#92400E;">Current Admission</span>
+                    <span style="margin-left:auto;background:${currentAdmission.status==='Admitted'?'#DC2626':currentAdmission.status==='Discharged'?'#059669':'#D97706'};color:white;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;">${currentAdmission.status}</span>
+                </div>
+                ${infoRow('Admission ID', `#ADM-${String(currentAdmission.id).padStart(3,'0')}`, true)}
+                ${infoRow('Ward', currentAdmission.ward)}
+                ${infoRow('Room / Bed', [currentAdmission.room_no, currentAdmission.bed_no].filter(Boolean).join(' / Bed '))}
+                ${infoRow('Attending Doctor', currentAdmission.doctor_name)}
+                ${infoRow('Admit Date', currentAdmission.admit_date)}
+                ${infoRow('Discharge Date', currentAdmission.discharge_date || 'Not discharged yet')}
+                ${infoRow('Diagnosis', currentAdmission.diagnosis)}
+                ${infoRow('Treatment', currentAdmission.treatment)}
+                ${infoRow('Amount (₹)', currentAdmission.amount > 0 ? '₹'+Number(currentAdmission.amount).toLocaleString('en-IN') : '⏳ Not set')}
+                ${infoRow('Admitted By', currentAdmission.admitted_by_name)}
+                ${currentAdmission.notes ? infoRow('Notes', currentAdmission.notes) : ''}
+                <button class="btn btn-primary" style="width:100%;margin-top:14px;padding:10px;" onclick="document.getElementById('patientDetailModal').remove();openEditAdmission(${p.id},${currentAdmission.id})">✏️ Edit Admission</button>
+            </div>` : `
+            <div style="background:#f8fafc;border:1.5px dashed #D1D5DB;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;">
+                <div style="font-size:32px;margin-bottom:8px;">🏥</div>
+                <div style="color:#6B7280;font-size:13px;">No active admission</div>
+                <button class="btn btn-primary" style="margin-top:12px;padding:8px 20px;" onclick="document.getElementById('patientDetailModal').remove();openAdmitModal(${p.id},'${(p.first_name+' '+p.last_name).replace(/'/g,"\\'")}')">➕ Admit Patient</button>
+            </div>`;
+
+        const apptRows = appts.length
+            ? appts.slice(0,5).map(a=>`
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:12px;">
+                    <span style="color:#374151;">${a.appointment_date} ${a.appointment_time}</span>
+                    <span style="color:#6B7280;">${a.doctor_name||'—'}</span>
+                    <span style="background:${a.status==='Confirmed'?'#dcfce7':a.status==='Pending'?'#fef9c3':a.status==='Completed'?'#dbeafe':'#fee2e2'};color:${a.status==='Confirmed'?'#16a34a':a.status==='Pending'?'#a16207':a.status==='Completed'?'#1d4ed8':'#dc2626'};padding:2px 8px;border-radius:10px;font-weight:600;">${a.status}</span>
+                </div>`).join('')
+            : '<div style="color:#9CA3AF;font-style:italic;font-size:12px;padding:8px 0;">No appointments on record</div>';
+
+        const div = document.createElement('div');
+        div.id = 'patientDetailModal';
+        div.className = 'modal-overlay active';
+        div.innerHTML = `
+        <div class="modal" style="max-width:580px;max-height:92vh;overflow-y:auto;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#1a1f36,#2d3348);border-radius:20px 20px 0 0;padding:22px 26px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0066FF,#00D9B5);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">👤</div>
+                <div style="flex:1;">
+                    <div style="color:white;font-size:18px;font-weight:800;">${p.first_name} ${p.last_name}</div>
+                    <div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:2px;">#P${String(p.id).padStart(4,'0')} &nbsp;·&nbsp; ${p.gender} &nbsp;·&nbsp; ${p.blood_group||'Blood N/A'}</div>
+                </div>
+                <button onclick="document.getElementById('patientDetailModal').remove();document.body.style.overflow='auto';" style="background:rgba(255,255,255,.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div style="padding:22px 26px;">
+                <!-- Patient Info -->
+                <div style="background:white;border:1.5px solid #E5E7EB;border-radius:14px;padding:16px 20px;margin-bottom:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0066FF;margin-bottom:8px;">👤 Patient Information</div>
+                    ${infoRow('Date of Birth', p.date_of_birth)}
+                    ${infoRow('Contact', p.contact)}
+                    ${infoRow('Email', p.email)}
+                    ${infoRow('Blood Group', p.blood_group, true)}
+                    ${infoRow('Address', p.address)}
+                    ${infoRow('Emergency Contact', p.emergency_contact)}
+                </div>
+
+                <!-- Admission -->
+                ${admissionSection}
+
+                <!-- Past Admissions -->
+                ${admissions.length > 1 ? `
+                <div style="background:white;border:1.5px solid #E5E7EB;border-radius:14px;padding:16px 20px;margin-bottom:16px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin-bottom:8px;">📋 Past Admissions (${admissions.length-1})</div>
+                    ${admissions.slice(1).map(a=>`
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:12px;">
+                        <span>#ADM-${String(a.id).padStart(3,'0')} · ${a.ward}</span>
+                        <span style="color:#6B7280;">${a.admit_date} → ${a.discharge_date||'ongoing'}</span>
+                        <span style="color:#0066FF;font-weight:700;">₹${Number(a.amount||0).toLocaleString('en-IN')}</span>
+                    </div>`).join('')}
+                </div>` : ''}
+
+                <!-- Appointments -->
+                <div style="background:white;border:1.5px solid #E5E7EB;border-radius:14px;padding:16px 20px;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6B7280;margin-bottom:8px;">📅 Recent Appointments (${appts.length})</div>
+                    ${apptRows}
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(div);
+        document.body.style.overflow = 'hidden';
+        div.addEventListener('click', e => { if (e.target===div) { div.remove(); document.body.style.overflow='auto'; } });
+    }
+
+    async function openEditAdmission(patientId, admissionId) {
+        try {
+            const [admissions] = await Promise.all([fetch(`/api/patients/${patientId}/admissions`).then(r=>r.json())]);
+            const a = admissions.find(x => x.id === admissionId) || admissions[0];
+            if (!a) return;
+            buildAdmitModal();
+            document.getElementById('adm-patient-id').value     = patientId;
+            document.getElementById('adm-patient-name').textContent = `🏥 Edit Admission #ADM-${String(a.id).padStart(3,'0')}`;
+            document.getElementById('adm-edit-id').value         = a.id;
+            document.getElementById('adm-admit-date').value      = a.admit_date||'';
+            document.getElementById('adm-discharge-date').value  = a.discharge_date||'';
+            document.getElementById('adm-ward').value            = a.ward||'';
+            document.getElementById('adm-room').value            = a.room_no||'';
+            document.getElementById('adm-bed').value             = a.bed_no||'';
+            document.getElementById('adm-diagnosis').value       = a.diagnosis||'';
+            document.getElementById('adm-treatment').value       = a.treatment||'';
+            document.getElementById('adm-amount').value          = a.amount||'';
+            document.getElementById('adm-notes').value           = a.notes||'';
+            document.getElementById('adm-status').value          = a.status||'Admitted';
+            const docSel = document.getElementById('adm-doctor');
+            docSel.innerHTML = '<option value="">Select Doctor</option>';
+            allDoctors.forEach(d => {
+                const o = document.createElement('option');
+                o.value = d.id; o.textContent = `${d.name} (${d.department})`;
+                if (d.id === a.doctor_id) o.selected = true;
+                docSel.appendChild(o);
+            });
+            document.getElementById('admitModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } catch(e) { showToast('❌ Error loading admission', 'error'); }
     }
 
     // ── Edit Patient (for filling missing fields: address & blood group) ───────
@@ -6093,6 +5913,189 @@
         if (!r.ok){ showToast('❌ '+d.error, 'error'); return; }
         loadUsersTable();
         showToast(`✅ User "${name}" deleted.`, 'success');
+    }
+
+    // ── Admissions ────────────────────────────────────────────────────────────
+    function openAdmitModal(patientId, patientName) {
+        if (!currentUser) { showToast('❌ Please login', 'error'); return; }
+        buildAdmitModal();
+        document.getElementById('adm-patient-id').value   = patientId;
+        document.getElementById('adm-patient-name').textContent = `🏥 Admitting: ${patientName}`;
+        document.getElementById('adm-admit-date').value   = new Date().toISOString().split('T')[0];
+        document.getElementById('adm-status').value       = 'Admitted';
+        document.getElementById('adm-discharge-date').value = '';
+        document.getElementById('adm-ward').value         = '';
+        document.getElementById('adm-room').value         = '';
+        document.getElementById('adm-bed').value          = '';
+        document.getElementById('adm-diagnosis').value    = '';
+        document.getElementById('adm-treatment').value    = '';
+        document.getElementById('adm-amount').value       = '';
+        document.getElementById('adm-notes').value        = '';
+        document.getElementById('adm-edit-id').value      = '';
+
+        // Populate doctor dropdown
+        const docSel = document.getElementById('adm-doctor');
+        docSel.innerHTML = '<option value="">Select Doctor</option>';
+        allDoctors.forEach(d => {
+            const o = document.createElement('option');
+            o.value = d.id;
+            o.textContent = `${d.name} (${d.department})`;
+            if (currentUser.role === 'doctor' && currentUser.doctor_id === d.id) o.selected = true;
+            docSel.appendChild(o);
+        });
+
+        document.getElementById('admitModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+
+    async function saveAdmission() {
+        const editId    = document.getElementById('adm-edit-id').value;
+        const patientId = document.getElementById('adm-patient-id').value;
+        const ward      = document.getElementById('adm-ward').value.trim();
+        const admitDate = document.getElementById('adm-admit-date').value;
+        if (!ward)      { showToast('❌ Ward is required', 'error'); return; }
+        if (!admitDate) { showToast('❌ Admit date is required', 'error'); return; }
+
+        const payload = {
+            patient_id:     parseInt(patientId),
+            doctor_id:      parseInt(document.getElementById('adm-doctor').value) || null,
+            ward,
+            room_no:        document.getElementById('adm-room').value.trim(),
+            bed_no:         document.getElementById('adm-bed').value.trim(),
+            admit_date:     admitDate,
+            discharge_date: document.getElementById('adm-discharge-date').value || null,
+            diagnosis:      document.getElementById('adm-diagnosis').value.trim(),
+            treatment:      document.getElementById('adm-treatment').value.trim(),
+            amount:         parseFloat(document.getElementById('adm-amount').value) || 0,
+            status:         document.getElementById('adm-status').value,
+            notes:          document.getElementById('adm-notes').value.trim()
+        };
+
+        try {
+            let r;
+            if (editId) {
+                r = await fetch(`/api/admissions/${editId}`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+                });
+            } else {
+                r = await fetch('/api/admissions', {
+                    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+                });
+            }
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Failed'), 'error'); return; }
+            showToast(`✅ Admission ${editId ? 'updated' : 'created'} successfully!`, 'success');
+            document.getElementById('admitModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            renderPatientsTable();
+        } catch(e) { showToast('❌ Network error', 'error'); }
+    }
+
+    function buildAdmitModal() {
+        if (document.getElementById('admitModal')) return;
+        const div = document.createElement('div');
+        div.id = 'admitModal';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="modal" style="max-width:640px;max-height:92vh;overflow-y:auto;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1a1f36,#2d3348);border-radius:20px 20px 0 0;position:sticky;top:0;z-index:1;">
+                <div>
+                    <h2 class="modal-title" style="color:white;margin:0;" id="adm-patient-name">Admit Patient</h2>
+                    <div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:3px;">Complete all admission details below</div>
+                </div>
+                <button onclick="document.getElementById('admitModal').classList.remove('active');document.body.style.overflow='auto';" style="background:rgba(255,255,255,.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;">×</button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <input type="hidden" id="adm-patient-id">
+                <input type="hidden" id="adm-edit-id">
+
+                <!-- Section: Ward & Bed -->
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0066FF;margin-bottom:10px;">🏥 Ward & Bed Details</div>
+                <div class="form-grid" style="margin-bottom:18px;">
+                    <div class="form-group">
+                        <label class="form-label">Ward *</label>
+                        <select id="adm-ward" class="form-select">
+                            <option value="">Select Ward</option>
+                            <option>General Ward</option>
+                            <option>ICU</option>
+                            <option>CCU</option>
+                            <option>NICU</option>
+                            <option>PICU</option>
+                            <option>Emergency Ward</option>
+                            <option>Maternity Ward</option>
+                            <option>Surgical Ward</option>
+                            <option>Orthopedic Ward</option>
+                            <option>Oncology Ward</option>
+                            <option>Psychiatric Ward</option>
+                            <option>Private Room</option>
+                            <option>Semi-Private Room</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Room No.</label>
+                        <input type="text" id="adm-room" class="form-input" placeholder="e.g. 204">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bed No.</label>
+                        <input type="text" id="adm-bed" class="form-input" placeholder="e.g. B3">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Attending Doctor</label>
+                        <select id="adm-doctor" class="form-select">
+                            <option value="">Select Doctor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section: Dates -->
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0066FF;margin-bottom:10px;">📅 Admission Period</div>
+                <div class="form-grid" style="margin-bottom:18px;">
+                    <div class="form-group">
+                        <label class="form-label">Admit Date *</label>
+                        <input type="date" id="adm-admit-date" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Discharge Date</label>
+                        <input type="date" id="adm-discharge-date" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="adm-status" class="form-select">
+                            <option value="Admitted">🏥 Admitted</option>
+                            <option value="Discharged">✅ Discharged</option>
+                            <option value="Transferred">🚑 Transferred</option>
+                            <option value="Critical">🚨 Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Amount (₹)</label>
+                        <input type="number" id="adm-amount" class="form-input" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <!-- Section: Medical -->
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0066FF;margin-bottom:10px;">🩺 Medical Details</div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label">Diagnosis</label>
+                    <input type="text" id="adm-diagnosis" class="form-input" placeholder="Primary diagnosis / reason for admission">
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label">Treatment / Procedure</label>
+                    <textarea id="adm-treatment" class="form-textarea" rows="2" placeholder="Treatment plan, procedures, medications..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="adm-notes" class="form-textarea" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="document.getElementById('admitModal').classList.remove('active');document.body.style.overflow='auto';">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAdmission()">💾 Save Admission</button>
+            </div>
+        </div>`;
+        document.body.appendChild(div);
+        div.addEventListener('click', e => { if (e.target===div) { div.classList.remove('active'); document.body.style.overflow='auto'; } });
     }
 
     // ── Dept detail ───────────────────────────────────────────────────────────
