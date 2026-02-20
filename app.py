@@ -1362,6 +1362,52 @@ def api_stats():
         'total_departments':  query("SELECT COUNT(*) as c FROM departments",one=True)['c'],
     })
 
+# ── Emergency Services ────────────────────────────────────────────────────────
+
+EMERGENCY_CONFIG_FILE = os.path.join(os.path.dirname(DB_PATH), 'emergency_config.json')
+
+def load_emergency_config():
+    defaults = {
+        'phone': HOSPITAL_PHONE,
+        'response_time': '8 min',
+        'total_ambulances': 24,
+        'available_ambulances': 18,
+        'on_duty': 6,
+        'services': [
+            {'icon': '🚑', 'name': 'Emergency Ambulance', 'desc': '24/7 rapid dispatch with trained paramedics'},
+            {'icon': '🏥', 'name': 'Emergency Trauma Care', 'desc': 'Immediate trauma assessment and stabilization'},
+            {'icon': '❤️', 'name': 'Cardiac Emergency', 'desc': 'Rapid response for cardiac events & CPR'},
+            {'icon': '🧠', 'name': 'Neuro Emergency', 'desc': 'Stroke and brain emergency fast-track protocol'},
+            {'icon': '🔥', 'name': 'Burns & Accidents', 'desc': 'Specialized burn and accident emergency care'},
+            {'icon': '👶', 'name': 'Pediatric Emergency', 'desc': 'Child emergency care with pediatric specialists'},
+        ]
+    }
+    try:
+        if os.path.exists(EMERGENCY_CONFIG_FILE):
+            import json
+            with open(EMERGENCY_CONFIG_FILE) as f:
+                saved = json.load(f)
+                defaults.update(saved)
+    except:
+        pass
+    return defaults
+
+@app.route('/api/emergency/config', methods=['GET', 'POST'])
+def api_emergency_config():
+    if request.method == 'GET':
+        return jsonify(load_emergency_config())
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Admin only'}), 403
+    import json
+    d = request.json or {}
+    cfg = load_emergency_config()
+    cfg.update({k: v for k, v in d.items() if k in cfg})
+    with open(EMERGENCY_CONFIG_FILE, 'w') as f:
+        json.dump(cfg, f, indent=2)
+    return jsonify({'message': 'Emergency config saved'})
+
 # ── Admissions ────────────────────────────────────────────────────────────────
 
 @app.route('/api/admissions', methods=['GET','POST'])

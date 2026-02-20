@@ -1,0 +1,39 @@
+{
+  "phone": "+1-800-MEDICARE",
+  "response_time": "8 min",
+  "total_ambulances": 20,
+  "available_ambulances": 19,
+  "on_duty": 18,
+  "services": [
+    {
+      "icon": "\ud83d\ude91",
+      "name": "Emergency Ambulance",
+      "desc": "24/7 rapid dispatch with trained paramedics"
+    },
+    {
+      "icon": "\ud83c\udfe5",
+      "name": "Emergency Trauma Care",
+      "desc": "Immediate trauma assessment and stabilization"
+    },
+    {
+      "icon": "\u2764\ufe0f",
+      "name": "Cardiac Emergency",
+      "desc": "Rapid response for cardiac events & CPR"
+    },
+    {
+      "icon": "\ud83e\udde0",
+      "name": "Neuro Emergency",
+      "desc": "Stroke and brain emergency fast-track protocol"
+    },
+    {
+      "icon": "\ud83d\udd25",
+      "name": "Burns & Accidents",
+      "desc": "Specialized burn and accident emergency care"
+    },
+    {
+      "icon": "\ud83d\udc76",
+      "name": "Pediatric Emergency",
+      "desc": "Child emergency care with pediatric specialists"
+    }
+  ]
+}

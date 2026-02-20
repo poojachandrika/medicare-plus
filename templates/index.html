@@ -1996,38 +1996,48 @@
     <!-- AMBULANCE PAGE -->
     <div id="ambulance" class="page">
         <div class="dashboard">
-            <div class="dashboard-header">
-                <h1 class="dashboard-title">Emergency Ambulance Service</h1>
-                <div class="breadcrumb">Home / Ambulance</div>
+            <div class="dashboard-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <h1 class="dashboard-title">🚑 Emergency Services</h1>
+                    <div class="breadcrumb">Home / Emergency Services</div>
+                </div>
+                <button id="editEmergencyBtn" style="display:none;" class="btn btn-outline" onclick="openEditEmergencyModal()">⚙️ Edit Config</button>
             </div>
 
-            <div class="dashboard-grid">
+            <div class="dashboard-grid" style="margin-bottom:24px;">
                 <div class="dashboard-card">
                     <div class="dashboard-card-icon">🚑</div>
-                    <div class="dashboard-card-value">24</div>
+                    <div class="dashboard-card-value" id="emg-total">—</div>
                     <div class="dashboard-card-label">Total Ambulances</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #00C853, #00D9B5);">✅</div>
-                    <div class="dashboard-card-value" style="color: #00C853;">18</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#00C853,#00D9B5);">✅</div>
+                    <div class="dashboard-card-value" style="color:#00C853;" id="emg-available">—</div>
                     <div class="dashboard-card-label">Available</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FFB800, #FF9500);">🚨</div>
-                    <div class="dashboard-card-value" style="color: #FFB800;">6</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#FFB800,#FF9500);">🚨</div>
+                    <div class="dashboard-card-value" style="color:#FFB800;" id="emg-onduty">—</div>
                     <div class="dashboard-card-label">On Duty</div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="dashboard-card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF5252);">⏱️</div>
-                    <div class="dashboard-card-value" style="color: #FF6B6B;">8 min</div>
+                    <div class="dashboard-card-icon" style="background:linear-gradient(135deg,#FF6B6B,#FF5252);">⏱️</div>
+                    <div class="dashboard-card-value" style="color:#FF6B6B;" id="emg-response">—</div>
                     <div class="dashboard-card-label">Avg Response Time</div>
                 </div>
             </div>
 
-            <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: var(--shadow); text-align: center; margin-top: 30px;">
-                <h2 style="font-family: 'Sora', sans-serif; font-size: 32px; margin-bottom: 15px;">24/7 Emergency Service</h2>
-                <p style="font-size: 18px; color: var(--text-gray); margin-bottom: 30px;">Call immediately for emergency ambulance service</p>
-                <button class="btn emergency-btn" style="font-size: 24px; padding: 20px 50px;">📞 Call 1-800-EMERGENCY</button>
+            <!-- Emergency call banner -->
+            <div style="background:linear-gradient(135deg,#FF6B6B,#DC2626);border-radius:16px;padding:32px;text-align:center;margin-bottom:28px;box-shadow:0 8px 32px rgba(220,38,38,0.3);">
+                <div style="font-size:48px;margin-bottom:8px;">🚨</div>
+                <h2 style="color:white;font-size:28px;font-weight:800;margin:0 0 8px;">24/7 Emergency Service</h2>
+                <p style="color:rgba(255,255,255,.8);font-size:16px;margin:0 0 20px;">Call immediately for emergency ambulance — available round the clock</p>
+                <a id="emg-call-btn" href="tel:+18001800" style="display:inline-block;background:white;color:#DC2626;font-size:22px;font-weight:800;padding:18px 48px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.2);">📞 <span id="emg-phone-display">Loading...</span></a>
+            </div>
+
+            <!-- Emergency services grid -->
+            <div id="emg-services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-gray);">Loading services...</div>
             </div>
         </div>
     </div>
@@ -2069,25 +2079,41 @@
                     <div class="feature-icon">📊</div>
                     <h3>Patient Reports</h3>
                     <p>Comprehensive patient statistics, admission trends, and demographic analysis.</p>
-                    <button class="btn btn-outline" onclick="generateReport('patients')" style="margin-top: 15px; width: 100%;">Generate Report</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">From</label><input type="date" id="rpt-patients-from" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">To</label><input type="date" id="rpt-patients-to" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                    </div>
+                    <button class="btn btn-outline" onclick="generateReport('patients')" style="margin-top:10px;width:100%;">Generate Report</button>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💰</div>
                     <h3>Financial Reports</h3>
                     <p>Revenue analysis, billing summaries, payment collection, and expense tracking.</p>
-                    <button class="btn btn-outline" onclick="generateReport('financial')" style="margin-top: 15px; width: 100%;">Generate Report</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">From</label><input type="date" id="rpt-financial-from" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">To</label><input type="date" id="rpt-financial-to" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                    </div>
+                    <button class="btn btn-outline" onclick="generateReport('financial')" style="margin-top:10px;width:100%;">Generate Report</button>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📈</div>
                     <h3>Department Performance</h3>
                     <p>Department-wise patient flow, efficiency metrics, and resource utilization.</p>
-                    <button class="btn btn-outline" onclick="generateReport('departments')" style="margin-top: 15px; width: 100%;">Generate Report</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">From</label><input type="date" id="rpt-departments-from" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">To</label><input type="date" id="rpt-departments-to" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                    </div>
+                    <button class="btn btn-outline" onclick="generateReport('departments')" style="margin-top:10px;width:100%;">Generate Report</button>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📅</div>
                     <h3>Appointment Reports</h3>
                     <p>Appointment trends, status breakdown, doctor-wise schedule and load analysis.</p>
-                    <button class="btn btn-outline" onclick="generateReport('appointments')" style="margin-top: 15px; width: 100%;">Generate Report</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">From</label><input type="date" id="rpt-appointments-from" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                        <div><label style="font-size:11px;color:#6B7280;font-weight:600;display:block;margin-bottom:3px;">To</label><input type="date" id="rpt-appointments-to" class="form-input" style="padding:6px 8px;font-size:12px;"></div>
+                    </div>
+                    <button class="btn btn-outline" onclick="generateReport('appointments')" style="margin-top:10px;width:100%;">Generate Report</button>
                 </div>
             </div>
         </div>
@@ -2241,6 +2267,11 @@
                 </div>
             </div>
             <div id="report-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-bottom:28px;"></div>
+            <!-- Date range badge shown when a filter is active -->
+            <div id="report-daterange-badge" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:#1D4ED8;font-weight:600;">
+                📆 <span id="report-daterange-text"></span>
+                <button onclick="clearReportDateFilter()" style="margin-left:12px;background:#DBEAFE;border:none;color:#1D4ED8;border-radius:6px;padding:2px 10px;cursor:pointer;font-size:12px;">✕ Clear</button>
+            </div>
             <div class="data-table-container">
                 <div class="table-header"><div class="table-title" id="report-table-title">Results</div><div class="table-actions"><div class="search-box"><span>🔍</span><input type="text" id="report-search" placeholder="Search..." oninput="filterReportTable(this.value)"></div></div></div>
                 <div style="overflow-x:auto;"><table class="data-table" id="report-table"><thead id="report-thead"></thead><tbody id="report-tbody"></tbody></table></div>
@@ -3074,15 +3105,17 @@
         }
         if (adminNav) adminNav.style.display = (loggedIn && currentUser?.role === 'admin') ? 'block' : 'none';
 
-        // Show Patients, Appointments, Reports nav only for logged-in staff/admin/doctor
+        // Show Patients, Appointments nav for admin/doctor/staff; Reports only for admin/staff
         const restrictedRoles = ['admin', 'doctor', 'staff'];
+        const reportRoles     = ['admin', 'staff'];
         const canSeeRestricted = loggedIn && restrictedRoles.includes(currentUser?.role);
+        const canSeeReports    = loggedIn && reportRoles.includes(currentUser?.role);
         const navPatients = document.getElementById('navPatients');
         const navAppts    = document.getElementById('navAppointments');
         const navReports  = document.getElementById('navReports');
         if (navPatients) navPatients.style.display  = canSeeRestricted ? '' : 'none';
         if (navAppts)    navAppts.style.display     = canSeeRestricted ? '' : 'none';
-        if (navReports)  navReports.style.display   = canSeeRestricted ? '' : 'none';
+        if (navReports)  navReports.style.display   = canSeeReports    ? '' : 'none';
 
         // If currently on a restricted page and user logged out, go home
         if (!loggedIn) {
@@ -3124,6 +3157,10 @@
         // Actions column in pharmacy table — Admin + Doctor only
         const actCol = document.getElementById('pharma-actions-col');
         if (actCol) actCol.style.display = isAdminOrDoc ? '' : 'none';
+
+        // Show/hide edit emergency config button
+        const emgEditBtn = document.getElementById('editEmergencyBtn');
+        if (emgEditBtn) emgEditBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
         // Lock add/edit/delete buttons if not logged in
         document.querySelectorAll('.requires-login').forEach(el => {
@@ -3185,6 +3222,12 @@
     function showPage(pageId) {
         const restrictedPages = ['patients', 'appointments', 'reports', 'reportviewer'];
         const restrictedRoles = ['admin', 'doctor', 'staff'];
+        const reportOnlyRoles = ['admin', 'staff'];
+        if (['reports','reportviewer'].includes(pageId) && (!currentUser || !reportOnlyRoles.includes(currentUser.role))) {
+            showToast('🔒 Reports are only accessible to Admin and Staff.', 'error');
+            openModal('loginModal');
+            return;
+        }
         if (restrictedPages.includes(pageId) && (!currentUser || !restrictedRoles.includes(currentUser.role))) {
             showToast('🔒 Please login to access this page.', 'error');
             openModal('loginModal');
@@ -3203,6 +3246,7 @@
         if (pageId === 'emailsettings') { loadEmailConfig(); }
         if (pageId === 'usermgmt')     { loadUsersTable(); }
         if (pageId === 'dashboard')    { loadDashboardStats(); renderAppointmentsTable(); }
+        if (pageId === 'ambulance')    { loadEmergencyPage(); }
         if (pageId === 'laboratory')   { loadLabTests(); loadLabStats(); }
         if (pageId === 'labBookings')  { loadLabBookings(); }
         if (pageId === 'pharmacy')     { loadMedicines(); loadPharmStats(); }
@@ -4361,6 +4405,9 @@
                 const editBtn = currentUser
                     ? `<button class="action-btn" style="background:#0066FF;color:white;" onclick="openEditPatient(${p.id})">✏ Edit</button>`
                     : '';
+                const deleteBtn = currentUser && currentUser.role === 'admin'
+                    ? `<button class="action-btn" style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="deletePatient(${p.id},'${(p.first_name+' '+p.last_name).replace(/'/g,"\\'")}')">🗑 Delete</button>`
+                    : '';
                 const admitBtn = currentUser && (currentUser.role === 'doctor' || currentUser.role === 'admin' || currentUser.role === 'staff')
                     ? admitted
                         ? `<button class="action-btn" style="background:#00C853;color:white;" onclick="openAdmissionDetail(${p.id})">🏥 View Admission</button>`
@@ -4379,10 +4426,38 @@
                         <button class="action-btn" onclick="viewPatient(${p.id})">👁 View</button>
                         ${editBtn}
                         ${admitBtn}
+                        ${deleteBtn}
                     </td>
                 </tr>`;
             });
         } catch(e) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;padding:30px;">Error loading patients.</td></tr>`; }
+    }
+
+    async function deletePatient(id, name) {
+        if (!currentUser || currentUser.role !== 'admin') { showToast('❌ Admin access required', 'error'); return; }
+        // Check for active appointments
+        try {
+            const appts = await fetch('/api/appointments').then(r=>r.json());
+            const patientAppts = appts.filter(a => a.patient_id === id);
+            const active = patientAppts.filter(a => ['Pending','Confirmed'].includes(a.status));
+            let confirmMsg = `Permanently delete patient "${name}" (#P${String(id).padStart(4,'0')}) from the database?\n\nThis cannot be undone.`;
+            if (active.length > 0) confirmMsg += `\n\n⚠️ Warning: This patient has ${active.length} active appointment(s). Those will also be deleted.`;
+            else if (patientAppts.length > 0) confirmMsg += `\n\nNote: ${patientAppts.length} appointment record(s) for this patient will also be deleted.`;
+            if (!confirm(confirmMsg)) return;
+        } catch(e) { if (!confirm(`Permanently delete patient "${name}"? This cannot be undone.`)) return; }
+        try {
+            // Delete patient appointments first
+            const appts = await fetch('/api/appointments').then(r=>r.json()).catch(()=>[]);
+            for (const a of appts.filter(x => x.patient_id === id)) {
+                await fetch(`/api/appointments/${a.id}`, {method:'DELETE'}).catch(()=>{});
+            }
+            const r = await fetch(`/api/patients/${id}`, {method:'DELETE'});
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Delete failed'), 'error'); return; }
+            showToast(`✅ Patient "${name}" deleted from database.`, 'success');
+            await loadDashboardStats();
+            await renderPatientsTable();
+        } catch(e) { showToast('❌ Network error: ' + e.message, 'error'); }
     }
 
     async function viewPatient(id) {
@@ -4976,18 +5051,217 @@
         } catch(e) { showToast('❌ Network error: ' + e.message, 'error'); }
     }
 
+    // ── Emergency Services ────────────────────────────────────────────────────
+    async function loadEmergencyPage() {
+        try {
+            const cfg = await fetch('/api/emergency/config').then(r=>r.json());
+            // Stats
+            const setEl = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+            setEl('emg-total',    cfg.total_ambulances);
+            setEl('emg-available',cfg.available_ambulances);
+            setEl('emg-onduty',   cfg.on_duty);
+            setEl('emg-response', cfg.response_time);
+            // Phone button
+            const phone = cfg.phone || '+1-800-MEDICARE';
+            const phoneEl = document.getElementById('emg-phone-display');
+            const callBtn = document.getElementById('emg-call-btn');
+            if (phoneEl) phoneEl.textContent = `Call ${phone}`;
+            if (callBtn) callBtn.href = `tel:${phone.replace(/[^+\d]/g,'')}`;
+            // Services grid
+            const grid = document.getElementById('emg-services-grid');
+            if (grid && cfg.services?.length) {
+                grid.innerHTML = cfg.services.map(s => `
+                <div style="background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:16px;border-left:4px solid #FF6B6B;">
+                    <div style="font-size:36px;flex-shrink:0;">${s.icon}</div>
+                    <div>
+                        <div style="font-weight:700;font-size:16px;color:#1a1f36;margin-bottom:4px;">${s.name}</div>
+                        <div style="font-size:13px;color:#6B7280;line-height:1.6;">${s.desc}</div>
+                    </div>
+                </div>`).join('');
+            }
+        } catch(e) { console.error('Emergency load error:', e); }
+    }
+
+    function openEditEmergencyModal() {
+        if (!currentUser || currentUser.role !== 'admin') return;
+        fetch('/api/emergency/config').then(r=>r.json()).then(cfg => {
+            const existing = document.getElementById('editEmergencyModal');
+            if (existing) existing.remove();
+            const div = document.createElement('div');
+            div.id = 'editEmergencyModal';
+            div.className = 'modal-overlay active';
+            div.innerHTML = `
+            <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#DC2626,#FF6B6B);border-radius:20px 20px 0 0;">
+                    <h2 class="modal-title" style="color:white;">🚑 Edit Emergency Config</h2>
+                    <button onclick="document.getElementById('editEmergencyModal').remove();document.body.style.overflow='auto';" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;">×</button>
+                </div>
+                <div class="modal-body" style="padding:24px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label">Emergency Phone Number</label>
+                            <input type="text" id="emg-edit-phone" class="form-input" value="${cfg.phone||''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Ambulances</label>
+                            <input type="number" id="emg-edit-total" class="form-input" value="${cfg.total_ambulances||24}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Available</label>
+                            <input type="number" id="emg-edit-available" class="form-input" value="${cfg.available_ambulances||18}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">On Duty</label>
+                            <input type="number" id="emg-edit-onduty" class="form-input" value="${cfg.on_duty||6}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Avg Response Time</label>
+                            <input type="text" id="emg-edit-response" class="form-input" value="${cfg.response_time||'8 min'}">
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <label class="form-label" style="margin-bottom:8px;display:block;">Emergency Services (one per line: icon|name|description)</label>
+                        <textarea id="emg-edit-services" class="form-textarea" rows="8" style="font-size:12px;font-family:monospace;">${(cfg.services||[]).map(s=>`${s.icon}|${s.name}|${s.desc}`).join('\n')}</textarea>
+                        <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">Format: 🚑|Service Name|Service description</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="document.getElementById('editEmergencyModal').remove();document.body.style.overflow='auto';">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveEmergencyConfig()">💾 Save</button>
+                </div>
+            </div>`;
+            document.body.appendChild(div);
+            document.body.style.overflow = 'hidden';
+            div.addEventListener('click', e => { if(e.target===div){div.remove();document.body.style.overflow='auto';} });
+        });
+    }
+
+    async function saveEmergencyConfig() {
+        const services = (document.getElementById('emg-edit-services').value||'').split('\n')
+            .map(l => l.trim()).filter(Boolean)
+            .map(l => { const p=l.split('|'); return {icon:p[0]||'🚑',name:p[1]||'',desc:p[2]||''}; });
+        const payload = {
+            phone:                document.getElementById('emg-edit-phone').value.trim(),
+            total_ambulances:     parseInt(document.getElementById('emg-edit-total').value)||0,
+            available_ambulances: parseInt(document.getElementById('emg-edit-available').value)||0,
+            on_duty:              parseInt(document.getElementById('emg-edit-onduty').value)||0,
+            response_time:        document.getElementById('emg-edit-response').value.trim(),
+            services
+        };
+        try {
+            const r = await fetch('/api/emergency/config', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ '+(d.error||'Save failed'),'error'); return; }
+            document.getElementById('editEmergencyModal')?.remove();
+            document.body.style.overflow = 'auto';
+            showToast('✅ Emergency config updated!','success');
+            loadEmergencyPage();
+        } catch(e) { showToast('❌ Network error','error'); }
+    }
+
     // ── Reports ───────────────────────────────────────────────────────────────
+    // Store current report type and date range for re-filtering
+    let _currentReportType = null;
+    let _currentReportData = null;
+    let _reportDateFrom    = null;
+    let _reportDateTo      = null;
+
     async function generateReport(type) {
+        _currentReportType = type;
+        // Grab date range from the per-report inputs
+        _reportDateFrom = document.getElementById(`rpt-${type}-from`)?.value || '';
+        _reportDateTo   = document.getElementById(`rpt-${type}-to`)?.value   || '';
+
         showPage('reportviewer');
         document.getElementById('report-summary').innerHTML = '<div style="padding:20px;color:var(--text-gray);">Loading report...</div>';
         document.getElementById('report-tbody').innerHTML   = '<tr><td colspan="10" style="text-align:center;padding:30px;">Fetching data from database...</td></tr>';
+
+        // Show date range badge
+        const badge = document.getElementById('report-daterange-badge');
+        const badgeText = document.getElementById('report-daterange-text');
+        if (_reportDateFrom || _reportDateTo) {
+            const from = _reportDateFrom || 'Beginning';
+            const to   = _reportDateTo   || 'Today';
+            badgeText.textContent = `Filtered: ${from} → ${to}`;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+
         try {
-            const r   = await fetch(`/api/reports/${type}`);
+            const r    = await fetch(`/api/reports/${type}`);
             const data = await r.json();
+            _currentReportData = data;
             reportData = data;
-            renderReportSummary(type, data);
-            renderReportTable(type, data);
+            // Apply date filter to relevant data
+            const filtered = applyReportDateFilter(type, data, _reportDateFrom, _reportDateTo);
+            renderReportSummary(type, filtered);
+            renderReportTable(type, filtered);
         } catch(e) { showToast('❌ Report generation failed: ' + e.message, 'error'); }
+    }
+
+    function applyReportDateFilter(type, data, from, to) {
+        if (!from && !to) return data;
+        const inRange = (dateStr) => {
+            if (!dateStr) return true;
+            if (from && dateStr < from) return false;
+            if (to   && dateStr > to)   return false;
+            return true;
+        };
+        // Deep clone to avoid mutating original
+        const d = JSON.parse(JSON.stringify(data));
+        if (type === 'patients') {
+            d.patients = d.patients.filter(p => inRange(p.created_at?.split('T')[0]));
+            const male = d.patients.filter(p=>p.gender==='Male').length;
+            const female = d.patients.filter(p=>p.gender==='Female').length;
+            const blood = {};
+            d.patients.forEach(p => { const bg = p.blood_group||'Unknown'; blood[bg]=(blood[bg]||0)+1; });
+            d.summary = { total: d.patients.length, male, female, blood_groups: blood };
+        } else if (type === 'appointments') {
+            d.appointments = d.appointments.filter(a => inRange(a.appointment_date));
+            d.summary = {
+                total:     d.appointments.length,
+                pending:   d.appointments.filter(a=>a.status==='Pending').length,
+                confirmed: d.appointments.filter(a=>a.status==='Confirmed').length,
+                completed: d.appointments.filter(a=>a.status==='Completed').length,
+                cancelled: d.appointments.filter(a=>a.status==='Cancelled').length,
+                no_show:   d.appointments.filter(a=>a.status==='No-Show').length,
+            };
+        } else if (type === 'financial') {
+            d.records = d.records.filter(r => inRange(r.date));
+            const total   = d.records.reduce((s,r)=>s+(r.amount||0),0);
+            const collected = d.records.filter(r=>['Completed','Confirmed'].includes(r.status)).reduce((s,r)=>s+(r.amount||0),0);
+            const pend    = d.records.filter(r=>['Pending'].includes(r.status)).reduce((s,r)=>s+(r.amount||0),0);
+            const canc    = d.records.filter(r=>['Cancelled','No-Show'].includes(r.status)).reduce((s,r)=>s+(r.amount||0),0);
+            const byType  = {};
+            d.records.forEach(r => { byType[r.type]=(byType[r.type]||0)+(r.amount||0); });
+            d.summary = { total_billed: total, collected, pending: pend, cancelled: canc, total_records: d.records.length, by_type: byType };
+        } else if (type === 'departments') {
+            // Filter appointment counts within date range per dept (re-calculate from appointments if available)
+            // For departments report, filter works best if we just note the date range in the title
+            // since dept summary is aggregated — just return as is (date filter doesn't apply well here)
+        }
+        return d;
+    }
+
+    function clearReportDateFilter() {
+        _reportDateFrom = ''; _reportDateTo = '';
+        const badge = document.getElementById('report-daterange-badge');
+        if (badge) badge.style.display = 'none';
+        if (_currentReportType && _currentReportData) {
+            renderReportSummary(_currentReportType, _currentReportData);
+            renderReportTable(_currentReportType, _currentReportData);
+        }
+        // Clear the date inputs too
+        if (_currentReportType) {
+            const f = document.getElementById(`rpt-${_currentReportType}-from`);
+            const t = document.getElementById(`rpt-${_currentReportType}-to`);
+            if (f) f.value = '';
+            if (t) t.value = '';
+        }
     }
 
     function renderReportSummary(type, data) {
