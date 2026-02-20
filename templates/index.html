@@ -3401,22 +3401,37 @@
                 const ampm = h < 12 ? 'AM' : 'PM';
                 return `${h===0?12:h>12?h-12:h}:${String(m).padStart(2,'0')} ${ampm}`;
             };
+
+            // Determine if selected date is today — disable past slots
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const isToday = date === todayStr;
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
             slots.forEach(s => {
+                const [sh, sm] = s.time.split(':').map(Number);
+                const slotMinutes = sh * 60 + sm;
+                const isPast = isToday && slotMinutes <= currentMinutes;
+                const isDisabled = !s.available || isPast;
+
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.textContent = fmt(s.time);
                 btn.style.cssText = `
                     padding:8px 4px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
-                    transition:all .15s;border:2px solid ${s.available ? '#E5E7EB' : '#F3F4F6'};
-                    background:${s.available ? 'white' : '#F3F4F6'};
-                    color:${s.available ? '#1a1f36' : '#D1D5DB'};
-                    pointer-events:${s.available ? 'auto' : 'none'};
+                    transition:all .15s;border:2px solid ${isDisabled ? '#F3F4F6' : '#E5E7EB'};
+                    background:${isDisabled ? '#F3F4F6' : 'white'};
+                    color:${isDisabled ? '#D1D5DB' : '#1a1f36'};
+                    pointer-events:${isDisabled ? 'none' : 'auto'};
                 `;
-                if (!s.available) {
+                if (isPast) {
+                    btn.title = 'Time has already passed';
+                    btn.style.textDecoration = 'line-through';
+                } else if (!s.available) {
                     btn.title = 'Already booked';
                     btn.style.textDecoration = 'line-through';
                 }
-                if (s.available) {
+                if (!isDisabled) {
                     btn.addEventListener('click', () => {
                         // deselect all
                         slotsDiv.querySelectorAll('button').forEach(b => {
@@ -3571,7 +3586,7 @@
 
             // Update stat boxes with real counts (scoped to this doctor automatically via API)
             const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-            setEl("appt-stat-today",     appts.filter(a => a.appointment_date === today).length);
+            setEl("appt-stat-total",     appts.length);
             setEl("appt-stat-confirmed", appts.filter(a => a.status === "Confirmed").length);
             setEl("appt-stat-pending",   appts.filter(a => a.status === "Pending").length);
             setEl("appt-stat-cancelled", appts.filter(a => a.status === "Cancelled").length);
@@ -3647,6 +3662,24 @@
                 <!-- Status options -->
                 <div style="font-weight:700;font-size:13px;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Change Status To:</div>
                 <div id="sm-status-options" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <!-- Reschedule Section -->
+                <div id="sm-reschedule-section" style="margin-top:16px;display:none;">
+                    <div style="font-weight:700;font-size:13px;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;padding-top:14px;border-top:1px dashed #E5E7EB;">📅 Reschedule to New Slot</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:4px;">New Date</label>
+                            <input type="date" id="sm-reschedule-date" style="width:100%;border:1.5px solid #E5E7EB;border-radius:8px;padding:9px;font-size:13px;box-sizing:border-box;" onchange="loadRescheduleSlots()">
+                        </div>
+                        <div style="display:flex;align-items:flex-end;">
+                            <button onclick="loadRescheduleSlots()" style="width:100%;padding:9px;background:#f0f4ff;color:#0066FF;border:1.5px solid #0066FF;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Load Slots</button>
+                        </div>
+                    </div>
+                    <div id="sm-reschedule-slots" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:36px;">
+                        <div style="grid-column:1/-1;color:#9CA3AF;font-size:12px;">Select a date to see available slots.</div>
+                    </div>
+                    <input type="hidden" id="sm-reschedule-time">
+                    <button id="sm-reschedule-btn" onclick="saveReschedule()" style="display:none;margin-top:12px;width:100%;padding:10px;background:#0066FF;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📅 Confirm Reschedule</button>
+                </div>
                 <!-- Amount -->
                 <div style="margin-top:16px;">
                     <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:6px;">💰 Consultation Fee (₹)</label>
@@ -3761,6 +3794,24 @@
         saveBtn.style.opacity = '.4';
         saveBtn.style.pointerEvents = 'none';
 
+        // Show reschedule section for Pending appointments (doctor/admin can reassign slot)
+        const rescheduleSection = document.getElementById('sm-reschedule-section');
+        const isDocOrAdmin = currentUser && (currentUser.role === 'doctor' || currentUser.role === 'admin');
+        if (rescheduleSection) {
+            if (isDocOrAdmin && appt.status === 'Pending') {
+                rescheduleSection.style.display = 'block';
+                // Pre-fill date with appointment's current date
+                const rDateEl = document.getElementById('sm-reschedule-date');
+                if (rDateEl) rDateEl.value = appt.appointment_date || '';
+                document.getElementById('sm-reschedule-time').value = '';
+                document.getElementById('sm-reschedule-slots').innerHTML = '<div style="grid-column:1/-1;color:#9CA3AF;font-size:12px;">Select a date and click Load Slots.</div>';
+                const rBtn = document.getElementById('sm-reschedule-btn');
+                if (rBtn) rBtn.style.display = 'none';
+            } else {
+                rescheduleSection.style.display = 'none';
+            }
+        }
+
         // Show modal
         document.getElementById('statusControlModal').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -3844,6 +3895,89 @@
     async function cancelAppointment(id) { openStatusModal(id); }
     async function viewAppointment(id)   { openStatusModal(id); }
 
+    async function loadRescheduleSlots() {
+        if (!_currentAppt) return;
+        const dateEl = document.getElementById('sm-reschedule-date');
+        const slotsDiv = document.getElementById('sm-reschedule-slots');
+        const rTimeEl = document.getElementById('sm-reschedule-time');
+        const rBtn = document.getElementById('sm-reschedule-btn');
+        const date = dateEl?.value;
+        if (!date) { slotsDiv.innerHTML = '<div style="grid-column:1/-1;color:#9CA3AF;font-size:12px;">Please select a date.</div>'; return; }
+
+        slotsDiv.innerHTML = '<div style="grid-column:1/-1;color:#9CA3AF;font-size:12px;">⏳ Loading slots...</div>';
+        if (rTimeEl) rTimeEl.value = '';
+        if (rBtn) rBtn.style.display = 'none';
+
+        try {
+            const slots = await fetch(`/api/appointments/available-slots?doctor_id=${_currentAppt.doctor_id}&date=${date}`).then(r=>r.json());
+            const fmt = t => { const [h,m] = t.split(':').map(Number); const ap = h<12?'AM':'PM'; return `${h===0?12:h>12?h-12:h}:${String(m).padStart(2,'0')} ${ap}`; };
+
+            // Determine if today — disable past slots
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const isToday = date === todayStr;
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            slotsDiv.innerHTML = '';
+            slots.forEach(s => {
+                const [sh, sm] = s.time.split(':').map(Number);
+                const slotMinutes = sh * 60 + sm;
+                const isPast = isToday && slotMinutes <= currentMinutes;
+                // Mark as unavailable if already booked AND it's not the current appointment's slot
+                const isCurrent = s.time === _currentAppt.appointment_time && date === _currentAppt.appointment_date;
+                const isDisabled = isPast || (!s.available && !isCurrent);
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = fmt(s.time);
+                btn.style.cssText = `padding:7px 4px;border-radius:8px;font-size:12px;font-weight:600;cursor:${isDisabled?'default':'pointer'};
+                    border:2px solid ${isDisabled?'#F3F4F6':'#E5E7EB'};
+                    background:${isDisabled?'#F3F4F6':'white'};
+                    color:${isDisabled?'#D1D5DB':'#1a1f36'};
+                    pointer-events:${isDisabled?'none':'auto'};`;
+                if (isPast) { btn.title = 'Time has passed'; btn.style.textDecoration = 'line-through'; }
+                else if (!s.available && !isCurrent) { btn.title = 'Already booked'; btn.style.textDecoration = 'line-through'; }
+
+                if (!isDisabled) {
+                    btn.addEventListener('click', () => {
+                        slotsDiv.querySelectorAll('button').forEach(b => { b.style.background='white'; b.style.borderColor='#E5E7EB'; b.style.color='#1a1f36'; });
+                        btn.style.background = '#0066FF'; btn.style.borderColor = '#0066FF'; btn.style.color = 'white';
+                        if (rTimeEl) rTimeEl.value = s.time;
+                        if (rBtn) { rBtn.style.display = 'block'; rBtn.textContent = `📅 Reschedule to ${fmt(s.time)}`; }
+                    });
+                }
+                slotsDiv.appendChild(btn);
+            });
+        } catch(e) {
+            slotsDiv.innerHTML = '<div style="grid-column:1/-1;color:red;font-size:12px;">Error loading slots.</div>';
+        }
+    }
+
+    async function saveReschedule() {
+        if (!_currentAppt) return;
+        const newDate = document.getElementById('sm-reschedule-date')?.value;
+        const newTime = document.getElementById('sm-reschedule-time')?.value;
+        if (!newDate || !newTime) { showToast('⚠️ Please select a slot first', 'warning'); return; }
+        const rBtn = document.getElementById('sm-reschedule-btn');
+        if (rBtn) { rBtn.textContent = '⏳ Rescheduling...'; rBtn.style.pointerEvents = 'none'; }
+        try {
+            const r = await fetch(`/api/appointments/${_currentAppt.id}/reschedule`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ appointment_date: newDate, appointment_time: newTime })
+            });
+            const data = await r.json();
+            if (!r.ok) { showToast('❌ ' + (data.error||'Reschedule failed'), 'error'); if(rBtn){rBtn.textContent='📅 Confirm Reschedule';rBtn.style.pointerEvents='auto';} return; }
+            closeStatusModal();
+            await loadDashboardStats();
+            await renderAppointmentsTable();
+            showToast(`✅ Appointment rescheduled to ${newDate} at ${newTime}`, 'success');
+        } catch(e) {
+            showToast('❌ Network error: ' + e.message, 'error');
+            if (rBtn) { rBtn.textContent = '📅 Confirm Reschedule'; rBtn.style.pointerEvents = 'auto'; }
+        }
+    }
+
     // ── Departments Page ──────────────────────────────────────────────────────
     let _allDepts = [];
     let _allDocsByDept = {};
@@ -3879,13 +4013,15 @@
 
             grid.innerHTML = depts.map(d => {
                 const docCount = (_allDocsByDept[d.name] || []).length;
+                const isHidden = d.hidden === 1;
                 const adminBtns = isAdmin ? `
-                    <div style="display:flex;gap:8px;margin-top:10px;">
-                        <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12px;" onclick="event.stopPropagation();openEditDeptModal(${d.id},'${d.name.replace(/'/g,"\\'")}','${(d.icon||'🏥').replace(/'/g,"\\'")}','${(d.description||'').replace(/'/g,"\\'").replace(/\n/g,' ')}')">✏️ Edit</button>
-                        <button class="btn" style="flex:1;padding:7px;font-size:12px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="event.stopPropagation();deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+                    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+                        <button class="btn btn-outline" style="flex:1;padding:7px;font-size:11px;min-width:60px;" onclick="event.stopPropagation();openEditDeptModal(${d.id},'${d.name.replace(/'/g,"\\'")}','${(d.icon||'🏥').replace(/'/g,"\\'")}','${(d.description||'').replace(/'/g,"\\'").replace(/\n/g,' ')}')">✏️ Edit</button>
+                        <button class="btn" style="flex:1;padding:7px;font-size:11px;min-width:60px;background:${isHidden?'#e8f5e9':'#FFF8E1'};color:${isHidden?'#00C853':'#D97706'};border:1px solid ${isHidden?'#A7F3D0':'#FDE68A'};" onclick="event.stopPropagation();toggleHideDept(${d.id},'${d.name.replace(/'/g,"\\'")}',${isHidden})">${isHidden?'👁 Show':'🙈 Hide'}</button>
+                        <button class="btn" style="flex:1;padding:7px;font-size:11px;min-width:60px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;" onclick="event.stopPropagation();deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">🗑️ Delete</button>
                     </div>` : '';
-                return `<div class="feature-card" id="dept-card-${d.id}" style="display:flex;flex-direction:column;cursor:pointer;transition:all .2s;" onclick="showDeptDetail(${d.id})">
-                    <div class="feature-icon">${d.icon||'🏥'}</div>
+                return `<div class="feature-card" id="dept-card-${d.id}" style="display:flex;flex-direction:column;cursor:pointer;transition:all .2s;${isHidden?'opacity:0.5;border:2px dashed #E5E7EB;':''};" onclick="showDeptDetail(${d.id})">
+                    <div class="feature-icon" style="position:relative;">${d.icon||'🏥'}${isHidden?'<span style="position:absolute;top:-4px;right:-4px;background:#DC2626;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:8px;">HIDDEN</span>':''}</div>
                     <h3 style="font-size:16px;">${d.name}</h3>
                     <p style="color:var(--text-gray);font-size:13px;flex:1;">${d.description||'Specialized medical care and treatment.'}</p>
                     <div style="margin-top:8px;font-size:12px;color:#0066FF;font-weight:600;">👨‍⚕️ ${docCount} Doctor${docCount!==1?'s':''}</div>
@@ -4163,6 +4299,26 @@
             if (!r.ok) { showToast('❌ ' + (d.error||'Delete failed'), 'error'); return; }
             showToast(`✅ "${name}" department deleted.`, 'success');
             await loadDepartmentsPage();
+        } catch(e) { showToast('❌ Network error', 'error'); }
+    }
+
+    async function toggleHideDept(id, name, isCurrentlyHidden) {
+        const action = isCurrentlyHidden ? 'show' : 'hide';
+        const msg = isCurrentlyHidden
+            ? `Show "${name}" department?\n\nIt and all its doctors will become visible to patients for booking.`
+            : `Hide "${name}" department?\n\nThis department AND all its doctors will be hidden from patients. No new bookings can be made.`;
+        if (!confirm(msg)) return;
+        try {
+            const r = await fetch(`/api/departments/${id}/toggle-hidden`, {method:'POST'});
+            const d = await r.json();
+            if (!r.ok) { showToast('❌ ' + (d.error||'Failed'), 'error'); return; }
+            const docNote = d.doctors_affected > 0 ? ` (${d.doctors_affected} doctor${d.doctors_affected!==1?'s':''} also ${d.hidden?'hidden':'shown'})` : '';
+            showToast(d.hidden
+                ? `🙈 "${name}" and its doctors are now hidden from patients.${docNote}`
+                : `👁 "${name}" and its doctors are now visible to patients.${docNote}`, 'success');
+            await loadDepartmentsPage();
+            // Reload doctors page if it's visible
+            if (document.getElementById('doctors')?.classList.contains('active')) await loadDoctorsPage();
         } catch(e) { showToast('❌ Network error', 'error'); }
     }
     async function renderPatientsTable() {
@@ -4514,8 +4670,11 @@
         const isAdmin = currentUser && currentUser.role === 'admin';
 
         let filtered = allDoctors;
-        // Non-admins only see available (visible) doctors
-        if (!isAdmin) filtered = filtered.filter(d => d.available !== 0);
+        // Non-admins only see available (visible) doctors in visible departments
+        if (!isAdmin) {
+            const hiddenDeptNames = new Set(allDepts.filter(d => d.hidden === 1).map(d => d.name));
+            filtered = filtered.filter(d => d.available !== 0 && !hiddenDeptNames.has(d.department));
+        }
         if (dept)   filtered = filtered.filter(d => d.department === dept);
         if (search) filtered = filtered.filter(d =>
             d.name.toLowerCase().includes(search) ||
@@ -4735,6 +4894,17 @@
 
     async function deleteDoctor(docId, docName) {
         if (!currentUser || currentUser.role !== 'admin') { showToast('❌ Admin access required', 'error'); return; }
+        // First check if doctor has appointments
+        try {
+            const appts = await fetch('/api/appointments').then(r=>r.json());
+            const docAppts = appts.filter(a => a.doctor_id === docId);
+            if (docAppts.length > 0) {
+                // Show blocking dialog — cannot delete
+                const activeCount = docAppts.filter(a => ['Pending','Confirmed'].includes(a.status)).length;
+                showDoctorDeleteBlockDialog(docName, docAppts.length, activeCount);
+                return;
+            }
+        } catch(e) { /* fall through to normal delete */ }
         if (!confirm(`Delete ${docName}? This will also remove their login account. This cannot be undone.`)) return;
         try {
             const r = await fetch(`/api/doctors/${docId}`, { method:'DELETE' });
@@ -4743,6 +4913,52 @@
             showToast(`✅ ${docName} removed.`, 'success');
             await loadDoctorsPage();
         } catch(e) { showToast('❌ Network error: ' + e.message, 'error'); }
+    }
+
+    function showDoctorDeleteBlockDialog(docName, total, active) {
+        // Remove any existing dialog
+        const existing = document.getElementById('doctorDeleteBlockDialog');
+        if (existing) existing.remove();
+        const div = document.createElement('div');
+        div.id = 'doctorDeleteBlockDialog';
+        div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        div.innerHTML = `
+        <div style="background:white;border-radius:20px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#DC2626,#ef4444);padding:24px 28px;display:flex;align-items:center;gap:14px;">
+                <div style="font-size:36px;">🚫</div>
+                <div>
+                    <div style="color:white;font-size:18px;font-weight:800;">Cannot Delete Doctor</div>
+                    <div style="color:rgba(255,255,255,.75);font-size:13px;margin-top:2px;">${docName}</div>
+                </div>
+            </div>
+            <div style="padding:28px;">
+                <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                    <strong>${docName}</strong> has <strong style="color:#DC2626;">${total} appointment${total!==1?'s':''}</strong> on record
+                    ${active > 0 ? `(including <strong style="color:#FFB800;">${active} active</strong>)` : ''} and <strong>cannot be deleted</strong>.
+                </p>
+                <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+                    <div style="font-weight:700;font-size:13px;color:#DC2626;margin-bottom:6px;">⚠️ Why can't I delete this doctor?</div>
+                    <div style="font-size:13px;color:#7F1D1D;line-height:1.7;">
+                        Deleting a doctor with existing appointments would break patient records and appointment history. 
+                        To remove this doctor, you must first cancel or reassign all their appointments.
+                    </div>
+                </div>
+                <div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:10px;padding:14px 16px;margin-bottom:24px;">
+                    <div style="font-weight:700;font-size:13px;color:#0369A1;margin-bottom:6px;">✅ What you can do instead:</div>
+                    <ul style="font-size:13px;color:#0C4A6E;line-height:1.9;margin:0;padding-left:18px;">
+                        <li>Go to <strong>Appointments</strong> and cancel all pending/confirmed slots</li>
+                        <li>Mark the doctor as <strong>Unavailable</strong> to stop new bookings</li>
+                        <li>Once all appointments are cleared, deletion will be allowed</li>
+                    </ul>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="document.getElementById('doctorDeleteBlockDialog').remove()" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Close</button>
+                    <button onclick="document.getElementById('doctorDeleteBlockDialog').remove();showPage('appointments')" style="flex:1;padding:11px;background:#0066FF;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">📅 Go to Appointments</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(div);
+        div.addEventListener('click', e => { if(e.target===div) div.remove(); });
     }
 
     async function createDoctorLogin(docId, docName) {

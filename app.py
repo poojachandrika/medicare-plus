@@ -430,7 +430,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
-    icon TEXT DEFAULT 'hospital', description TEXT
+    icon TEXT DEFAULT 'hospital', description TEXT,
+    hidden INTEGER DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS doctors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -894,7 +895,30 @@ def api_departments():
             return jsonify({'error':'Department already exists'}), 409
         nid = execute("INSERT INTO departments (slug,name,icon,description) VALUES (?,?,?,?)",(slug,name,icon,desc))
         return jsonify({'message':'Department added','id':nid,'slug':slug,'name':name,'icon':icon,'description':desc}), 201
-    return jsonify(query("SELECT id,slug,name,icon,description FROM departments ORDER BY name"))
+    is_admin = logged_in() and session.get('role') == 'admin'
+    if is_admin:
+        return jsonify(query("SELECT id,slug,name,icon,description,hidden FROM departments ORDER BY name"))
+    return jsonify(query("SELECT id,slug,name,icon,description,hidden FROM departments WHERE hidden=0 ORDER BY name"))
+
+@app.route('/api/departments/<int:did>/toggle-hidden', methods=['POST'])
+def api_department_toggle_hidden(did):
+    err = require_login()
+    if err: return err
+    if session.get('role') != 'admin':
+        return jsonify({'error':'Admin only'}), 403
+    row = query("SELECT * FROM departments WHERE id=?", (did,), one=True)
+    if not row: return jsonify({'error':'Not found'}), 404
+    new_hidden = 0 if row['hidden'] else 1
+    execute("UPDATE departments SET hidden=? WHERE id=?", (new_hidden, did))
+    # Also hide/show all doctors in this department
+    new_available = 0 if new_hidden else 1
+    execute("UPDATE doctors SET available=? WHERE department=?", (new_available, row['name']))
+    affected = query("SELECT COUNT(*) as c FROM doctors WHERE department=?", (row['name'],), one=True)['c']
+    return jsonify({
+        'message': f'Department {"hidden" if new_hidden else "visible"} — {affected} doctor(s) {"hidden" if new_hidden else "shown"}',
+        'hidden': new_hidden,
+        'doctors_affected': affected
+    })
 
 @app.route('/api/departments/<int:did>', methods=['PUT','DELETE'])
 def api_department(did):
@@ -935,12 +959,13 @@ def api_doctors():
             resp['login_credentials'] = creds
         return jsonify(resp), 201
     dept = request.args.get('department','')
-    # Non-admins (including public/patients) only see available doctors
+    # Non-admins (including public/patients) only see available doctors in visible departments
     is_admin = logged_in() and session.get('role') == 'admin'
-    avail_filter = '' if is_admin else ' AND available=1'
+    avail_filter = '' if is_admin else ' AND d.available=1'
+    hidden_filter = '' if is_admin else ' AND (dep.hidden IS NULL OR dep.hidden=0)'
     if dept:
-        return jsonify(query(f"SELECT * FROM doctors WHERE department=?{avail_filter} ORDER BY name",(dept,)))
-    return jsonify(query(f"SELECT * FROM doctors WHERE 1=1{avail_filter} ORDER BY department,name"))
+        return jsonify(query(f"SELECT d.* FROM doctors d LEFT JOIN departments dep ON dep.name=d.department WHERE d.department=?{avail_filter}{hidden_filter} ORDER BY d.name",(dept,)))
+    return jsonify(query(f"SELECT d.* FROM doctors d LEFT JOIN departments dep ON dep.name=d.department WHERE 1=1{avail_filter}{hidden_filter} ORDER BY d.department,d.name"))
 
 @app.route('/api/admin/reset-db', methods=['POST'])
 def api_reset_db():
@@ -1066,6 +1091,10 @@ def api_doctor(did):
              d.get('qualification',row['qualification']),did))
         return jsonify({'message':'Doctor updated'})
     # DELETE — remove linked user account first to avoid foreign key conflict
+    # Check if doctor has any appointments first
+    appt_count = query("SELECT COUNT(*) as c FROM appointments WHERE doctor_id=?", (did,), one=True)['c']
+    if appt_count > 0:
+        return jsonify({'error': f'Cannot delete — {appt_count} appointment(s) exist for this doctor. Please reassign or cancel them first.', 'appointment_count': appt_count}), 400
     try:
         execute("DELETE FROM users WHERE doctor_id=?", (did,))
     except Exception:
@@ -1189,6 +1218,40 @@ def api_appointments():
     if sf:
         return jsonify(query(sql+" WHERE a.status=? ORDER BY a.id DESC",(sf,)))
     return jsonify(query(sql+" ORDER BY a.id DESC"))
+
+@app.route('/api/appointments/<int:aid>/reschedule', methods=['POST'])
+def api_appointment_reschedule(aid):
+    err = require_login()
+    if err: return err
+    row = query("SELECT * FROM appointments WHERE id=?", (aid,), one=True)
+    if not row: return jsonify({'error':'Not found'}), 404
+    d = request.json or {}
+    new_date = d.get('appointment_date', row['appointment_date'])
+    new_time = d.get('appointment_time')
+    if not new_time:
+        return jsonify({'error': 'appointment_time is required'}), 400
+    # Check if new slot is already confirmed by someone else
+    conflict = query(
+        "SELECT id FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time=? AND status='Confirmed' AND id!=?",
+        (row['doctor_id'], new_date, new_time, aid), one=True
+    )
+    if conflict:
+        return jsonify({'error': 'This slot is already confirmed for another patient. Please choose a different slot.'}), 409
+    execute("UPDATE appointments SET appointment_date=?, appointment_time=?, status='Pending' WHERE id=?",
+            (new_date, new_time, aid))
+    # Send email notification if patient has email
+    full = query("""SELECT a.*, p.first_name||' '||p.last_name AS patient_name,
+                    p.email AS patient_email, d.name AS doctor_name, d.department
+                    FROM appointments a JOIN patients p ON p.id=a.patient_id
+                    JOIN doctors d ON d.id=a.doctor_id WHERE a.id=?""", (aid,), one=True)
+    if full and full.get('patient_email'):
+        html = build_status_change_email(
+            full['patient_name'], full['doctor_name'], full['department'],
+            new_date, new_time, 'Pending', aid)
+        send_email_async(full['patient_email'],
+            f"📅 Appointment Rescheduled — {HOSPITAL_NAME}", html)
+    return jsonify({'message': 'Appointment rescheduled', 'new_date': new_date, 'new_time': new_time})
+
 
 @app.route('/api/appointments/available-slots')
 def api_available_slots():
@@ -1874,6 +1937,11 @@ def _init():
     if db_dir:
         os.makedirs(db_dir, exist_ok=True)   # ensure /data exists on Railway volume
     create_tables()
+    # Migration: add hidden column to departments if it doesn't exist
+    try:
+        execute("ALTER TABLE departments ADD COLUMN hidden INTEGER DEFAULT 0")
+    except Exception:
+        pass  # column already exists
     seed_database()
     _migrate_doctor_users()   # safe to run every startup — skips existing accounts
 
