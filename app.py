@@ -16,9 +16,10 @@ except ImportError:
     pass
 
 # Email imports
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+# Email — SendGrid REST API via stdlib urllib (no extra packages needed)
+import urllib.request
+import urllib.error
+import json as _json
 import threading
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -54,8 +55,8 @@ app.config.update(
 HOSPITAL_NAME  = os.environ.get('HOSPITAL_NAME',  'MediCare Plus Hospital')
 HOSPITAL_PHONE = os.environ.get('HOSPITAL_PHONE', '+1-800-MEDICARE')
 
-MAIL_HOST = 'smtp.gmail.com'
-MAIL_PORT = 587
+# SendGrid REST API endpoint
+SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send'
 
 # ── Security headers on every response ───────────────────────────────────────
 @app.after_request
@@ -71,7 +72,7 @@ EMAIL_CONFIG_FILE = os.path.join(os.path.dirname(DB_PATH), 'email_config.json')
 
 def load_email_config():
     """Load email config from file, fallback to defaults."""
-    defaults = {'enabled': False, 'username': '', 'password': '', 'provider': 'gmail'}
+    defaults = {'enabled': False, 'username': '', 'password': '', 'provider': 'sendgrid'}
     try:
         if os.path.exists(EMAIL_CONFIG_FILE):
             import json
@@ -126,33 +127,52 @@ def require_login():
 # ── Email ─────────────────────────────────────────────────────────────────────
 
 def send_email_async(to_email, subject, html_body):
-    """Send email in background thread so it doesn't slow down the API."""
-    username, password, enabled = get_mail_settings()
-    if not enabled or not username or not password:
+    """Send email via SendGrid REST API in a background thread."""
+    sender_email, api_key, enabled = get_mail_settings()
+    if not enabled or not sender_email or not api_key:
         print(f"⚠️  Email skipped — not configured. Go to Admin → Email Settings to set up.")
         return
     if not to_email or '@' not in to_email:
         print(f"⚠️  Email skipped — invalid recipient: {to_email}")
         return
+
     def _send():
+        payload = _json.dumps({
+            "personalizations": [{"to": [{"email": to_email}]}],
+            "from": {"email": sender_email, "name": HOSPITAL_NAME},
+            "subject": subject,
+            "content": [{"type": "text/html", "value": html_body}]
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            SENDGRID_API_URL,
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type":  "application/json",
+            },
+            method="POST",
+        )
         try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From']    = f'{HOSPITAL_NAME} <{username}>'
-            msg['To']      = to_email
-            msg.attach(MIMEText(html_body, 'html'))
-            with smtplib.SMTP(MAIL_HOST, MAIL_PORT, timeout=15) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(username, password)
-                server.sendmail(username, to_email, msg.as_string())
-            print(f"✅ Email sent to {to_email}")
-        except smtplib.SMTPAuthenticationError:
-            print("❌ Gmail authentication failed. Check username/password in Admin → Email Settings.")
-        except smtplib.SMTPException as e:
-            print(f"❌ SMTP error: {e}")
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                if resp.status in (200, 202):
+                    print(f"✅ Email sent to {to_email} via SendGrid (status {resp.status})")
+                else:
+                    body = resp.read().decode("utf-8", errors="replace")
+                    print(f"⚠️  SendGrid unexpected status {resp.status}: {body}")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            if e.code == 401:
+                print("❌ SendGrid 401 — invalid API key. Check Admin → Email Settings.")
+            elif e.code == 403:
+                print("❌ SendGrid 403 — sender not verified. Add the sender email in SendGrid.")
+            else:
+                print(f"❌ SendGrid HTTP {e.code}: {body}")
+        except urllib.error.URLError as e:
+            print(f"❌ SendGrid connection error: {e.reason}")
         except Exception as e:
             print(f"❌ Email error: {e}")
+
     threading.Thread(target=_send, daemon=True).start()
 
 def build_confirmation_email(patient_name, doctor_name, department, appt_date, appt_time, reason, appt_id):
@@ -1874,7 +1894,7 @@ def api_email_config():
             'enabled':  d.get('enabled', False),
             'username': d.get('username', '').strip(),
             'password': d.get('password', '').strip(),
-            'provider': d.get('provider', 'gmail'),
+            'provider': d.get('provider', 'sendgrid'),
         }
         save_email_config(cfg)
         return jsonify({'message': 'Email settings saved'})
@@ -1896,66 +1916,65 @@ def api_email_test():
     to = d.get('email', '').strip()
     if not to or '@' not in to:
         return jsonify({'error': 'Valid email required'}), 400
-    username, password, enabled = get_mail_settings()
+    sender_email, api_key, enabled = get_mail_settings()
 
     # Detailed pre-flight checks
     if not enabled:
         return jsonify({'error': 'STEP 1 FAILED: Email notifications are disabled. Toggle the switch ON first.'}), 400
-    if not username:
-        return jsonify({'error': 'STEP 2 FAILED: No Gmail address entered. Enter your Gmail and Save.'}), 400
-    if not password:
-        return jsonify({'error': 'STEP 3 FAILED: No App Password saved. Enter your 16-letter App Password and Save.'}), 400
-    if '@gmail.com' not in username and '@googlemail.com' not in username:
-        return jsonify({'error': f'WARNING: {username} may not be a Gmail address. Only Gmail SMTP is supported.'}), 400
+    if not sender_email:
+        return jsonify({'error': 'STEP 2 FAILED: No sender email entered. Enter your verified SendGrid sender email and Save.'}), 400
+    if not api_key:
+        return jsonify({'error': 'STEP 3 FAILED: No API key saved. Enter your SendGrid API key (starts with SG.) and Save.'}), 400
+    if not api_key.startswith('SG.'):
+        return jsonify({'error': f'WARNING: API key does not look like a SendGrid key (should start with SG.).'}), 400
 
+    html_body = build_confirmation_email(
+        'Test Patient', 'Dr. Sample Doctor', 'Cardiology',
+        date.today().strftime('%Y-%m-%d'), '10:00 AM',
+        'This is a test email to verify your SendGrid settings work.', 0)
+
+    payload = _json.dumps({
+        "personalizations": [{"to": [{"email": to}]}],
+        "from": {"email": sender_email, "name": HOSPITAL_NAME},
+        "subject": f"✅ MediCare Plus — Email Test Successful",
+        "content": [{"type": "text/html", "value": html_body}]
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        SENDGRID_API_URL,
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type":  "application/json",
+        },
+        method="POST",
+    )
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'✅ MediCare Plus — Email Test Successful'
-        msg['From']    = f'{HOSPITAL_NAME} <{username}>'
-        msg['To']      = to
-        html_body = build_confirmation_email(
-            'Test Patient', 'Dr. Sample Doctor', 'Cardiology',
-            date.today().strftime('%Y-%m-%d'), '10:00 AM',
-            'This is a test email to verify your settings work.', 0)
-        msg.attach(MIMEText(html_body, 'html'))
-
-        print(f"📧 Attempting SMTP connection to {MAIL_HOST}:{MAIL_PORT}...")
-        with smtplib.SMTP(MAIL_HOST, MAIL_PORT, timeout=20) as server:
-            server.set_debuglevel(0)
-            server.ehlo()
-            print("📧 EHLO ok, starting TLS...")
-            server.starttls()
-            server.ehlo()
-            print(f"📧 TLS ok, logging in as {username}...")
-            server.login(username, password)
-            print(f"📧 Login ok, sending to {to}...")
-            server.sendmail(username, to, msg.as_string())
-            print(f"✅ Email delivered to {to}")
-
+        print(f"📧 Sending test email via SendGrid to {to}...")
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            print(f"✅ SendGrid accepted (status {resp.status})")
         return jsonify({
             'message': f'✅ Email sent to {to}! Check your inbox (and spam/junk folder).',
-            'from': username,
+            'from': sender_email,
             'to': to
         })
-
-    except smtplib.SMTPAuthenticationError as e:
-        msg_detail = str(e)
-        if '534' in msg_detail or '535' in msg_detail:
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        if e.code == 401:
             return jsonify({'error': (
-                'Authentication failed (535). This means:\n'
-                '• You used your normal Gmail password — this does NOT work\n'
-                '• You need a Gmail APP PASSWORD (16 letters with spaces)\n\n'
-                'How to get one:\n'
-                '1. Go to myaccount.google.com/security\n'
-                '2. Enable 2-Step Verification\n'
-                '3. Search "App passwords" → Generate → Mail → Copy 16 letters\n'
-                '4. Paste it in the App Password field above'
+                'SendGrid API key is invalid (401).\n'
+                '• Make sure you copied the full key starting with SG.\n'
+                '• Generate a new key at app.sendgrid.com → Settings → API Keys'
             )}), 400
-        return jsonify({'error': f'Authentication error: {msg_detail}'}), 400
-    except smtplib.SMTPConnectError as e:
-        return jsonify({'error': f'Cannot connect to Gmail SMTP. Check your internet connection. ({e})'}), 400
-    except smtplib.SMTPRecipientsRefused as e:
-        return jsonify({'error': f'Recipient email refused: {to}. Check the address is valid.'}), 400
+        if e.code == 403:
+            return jsonify({'error': (
+                'SendGrid 403 Forbidden.\n'
+                f'• Sender "{sender_email}" must be verified in SendGrid.\n'
+                '• Go to app.sendgrid.com → Settings → Sender Authentication'
+            )}), 400
+        return jsonify({'error': f'SendGrid error {e.code}: {body}'}), 400
+    except urllib.error.URLError as e:
+        return jsonify({'error': f'Cannot reach SendGrid. Check internet connection. ({e.reason})'}), 400
     except Exception as e:
         return jsonify({'error': f'Error: {type(e).__name__}: {str(e)}'}), 500
 
